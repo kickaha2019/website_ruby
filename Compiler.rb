@@ -18,6 +18,7 @@
 
 require 'fileutils'
 require 'rexml/document'
+require 'rexml/xpath'
 require 'yaml'
 require 'cgi'
 
@@ -85,9 +86,10 @@ class Compiler
     # Load the templates
     load_templates
 
-    # Find [] link targets on all the articles
-    @targets = Hash.new {|h,k| h[k] = []}
-    find_targets( '')
+    # Find anchors in all the articles
+    # amd also gather lat lons from KML files
+    @anchors = Hash.new {|h,k| h[k] = {lat:0, lon:0, links:[]}}
+    find_anchors('')
 
     # Parse all the articles recursively
     @articles = []
@@ -115,52 +117,40 @@ class Compiler
   end
 
   # Find targets in the articles
-  def find_targets( path)
+  def find_anchors(path)
 
     # Skip special directories
     return if path == '/resources'
     return if path == '/templates'
 
     # Loop over source files
-    source = list_dir( @source + path)
-    source.each do |file|
+    Dir.entries( @source + path).each do |file|
+      next if /^\./ =~ file
       path1 = path + "/" + file
 
       if File.directory?( @source + path1)
-        find_targets( path1)
+        find_anchors(path1)
+      elsif /\.kml\.xml$/ =~ file
+        parse_kml_xml( @source + path1)
       elsif m = /^(.*)\.txt$/.match( file)
         found, php, gather = [], false, true
 
         IO.readlines( @source + path1).each do |line|
           php = true if /^PHP/ =~ line
-          if /^(PHP|HTML|Code):/ =~ line
-            gather = false
-          elsif /^\S/ =~ line
+          if /^(Anchor):/ =~ line
             gather = true
+          elsif /^\S/ =~ line
+            gather = false
           end
 
-          if gather
-            els = line.split( "''")
-            i = 1
-            while i < els.size
-              found << els[i]
-              i += 2
-            end
-
-            while m = /^[^\[]*\[([^\]]*)\](.*)$/.match( line)
-              if /^http(s|):/ =~ m[1]
-                found << m[1].split(' ')[1..-1].join(' ')
-              else
-                found << m[1]
-              end
-              line = m[2]
-            end
+          if gather && line.strip != ''
+            found << line.strip
           end
         end
 
         url = "#{@source}#{path1.gsub( /\.txt$/, php ? '.php' : '.html')}"
         found.each do |link|
-          @targets[link] << url
+          @anchors[link][:links] << url
         end
       end
     end
@@ -182,7 +172,6 @@ class Compiler
             begin
               defn = YAML.load( IO.read( @source + path1))
               defn['links']   = get_local_links( @source+path)
-              # defn['targets'] = @targets
               erb = ERB.new( @templates[defn['template']])
               io.print erb.result( Bound.new( defn).get_binding)
             rescue
@@ -255,7 +244,7 @@ class Compiler
 #        generated << file
       elsif /\.(JPG|jpg|png|zip)$/ =~ file
         generated << file
-      elsif not /\.(afphoto|command|erb|pdf|yaml)$/ =~ file
+      else
         raise "Unhandled file: #{path1}"
       end
     end
@@ -309,6 +298,16 @@ class Compiler
 
     if verb
       parse_verb( verb, strip(entry), article, lineno)
+    end
+  end
+
+  def parse_kml_xml( path)
+    doc = REXML::Document.new IO.read( path)
+    REXML::XPath.each( doc, "//Placemark") do |place|
+      entry = @anchors[ place.elements['name'].text.strip]
+      coords = place.elements['Point'].elements['coordinates'].text.strip.split(',')
+      entry[:lat] = coords[1].to_f
+      entry[:lon] = coords[0].to_f
     end
   end
 
@@ -461,8 +460,8 @@ class Compiler
 
   def get_local_links( path)
     links = {}
-    @targets.each_pair do |name,targets|
-      links[name] = targets.collect {|target| HTML::relative_path( path + '/index.html', target)}
+    @anchors.each_pair do |name,entry|
+      links[name] = entry[:links].collect {|target| HTML::relative_path( path + '/index.html', target)}
     end
 
     Dir.entries( path).each do |f|
@@ -492,7 +491,10 @@ class Compiler
       next if file == ".DS_Store"
       next if file == "parameters.txt"
       next if file == "structure.txt"
-      #next if file == "index.txt"
+      next if /\.kml\.xml$/ =~ file
+      next if /\.(afphoto|command|erb|md|pdf|yaml)$/ =~ file
+
+        #next if file == "index.txt"
       next if /\.timestamp$/ =~ file
       if / / =~ file
         raise "Spaces in name at #{path}/#{file}"
