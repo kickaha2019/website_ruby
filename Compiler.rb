@@ -88,7 +88,7 @@ class Compiler
 
     # Find anchors in all the articles
     # amd also gather lat lons from KML files
-    @anchors = Hash.new {|h,k| h[k] = {lat:0, lon:0, links:[]}}
+    @anchors = Hash.new {|h,k| h[k] = {lat:nil, lon:nil, links:[]}}
     find_anchors('')
 
     # Parse all the articles recursively
@@ -133,11 +133,12 @@ class Compiler
       elsif /\.kml\.xml$/ =~ file
         parse_kml_xml( @source + path1)
       elsif m = /^(.*)\.txt$/.match( file)
-        found, php, gather = [], false, true
+        found, php, gather, count = [], false, true, 0
 
         IO.readlines( @source + path1).each do |line|
           php = true if /^PHP/ =~ line
           if /^(Anchor):/ =~ line
+            count += 1
             gather = true
           elsif /^\S/ =~ line
             gather = false
@@ -148,7 +149,7 @@ class Compiler
           end
         end
 
-        url = "#{@source}#{path1.gsub( /\.txt$/, php ? '.php' : '.html')}"
+        url = "#{@source}#{path1.gsub( /\.txt$/, php ? '.php' : '.html')}##{count}"
         found.each do |link|
           @anchors[link][:links] << url
         end
@@ -156,7 +157,7 @@ class Compiler
     end
   end
 
-# Parse the articles
+  # Parse the articles
   def parse( parent, path, params)
 
     # Skip special directories
@@ -475,6 +476,10 @@ class Compiler
     end
 
     links
+  end
+
+  def is_anchor_defined?(name)
+    ! @anchors[name][:lat].nil?
   end
 
   def is_source_file?( file)

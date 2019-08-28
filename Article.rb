@@ -544,4 +544,10 @@ class Article
   def to_xml_date( time)
     @compiler.to_xml_date( time)
   end
+
+  def validate_anchor( lineno, link)
+    if ! @compiler.is_anchor_defined?(link)
+      error( lineno, "Unknown anchor link: #{link}")
+    end
+  end
 end

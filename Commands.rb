@@ -3,7 +3,17 @@ class Commands
 	@@gallery_index = 0
 
 	def Anchor( article, lineno, entry)
+		if entry.size < 1
+			article.error( lineno, "No entries for anchor")
+		else
+			entry.each do |link|
+				article.validate_anchor( lineno, link)
+			end
+		end
 
+		article.add_content do |html|
+			html.anchor
+		end
 	end
 
 	def Centre( article, lineno, entry)

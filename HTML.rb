@@ -5,12 +5,13 @@ class HTML
   @@links = {}
 
   def initialize( sink, path, links, templates)
-    @path = path
-    @output = []
-    @error = nil
+    @path         = path
+    @output       = []
+    @error        = nil
     @float_height = 10
-    @sink = sink
-    @templates = templates
+    @sink         = sink
+    @templates    = templates
+    @n_anchors    = 0
 
     if @@links.size == 0
       links.each_pair do |k,v|
@@ -45,6 +46,11 @@ class HTML
     write( text)
     end_div
     end_cell
+  end
+
+  def anchor
+    @n_anchors += 1
+    @output << "<a name=\"#{@n_anchors}\">"
   end
 
   def breadcrumbs( entries, title)
