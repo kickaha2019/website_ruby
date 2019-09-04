@@ -142,9 +142,7 @@ class Compiler
             gather = true
           elsif /^\S/ =~ line
             gather = false
-          end
-
-          if gather && line.strip != ''
+          elsif gather && line.strip != ''
             found << line.strip
           end
         end
@@ -173,6 +171,7 @@ class Compiler
             begin
               defn = YAML.load( IO.read( @source + path1))
               defn['links']   = get_local_links( @source+path)
+              defn['anchors'] = @anchors
               erb = ERB.new( @templates[defn['template']])
               io.print erb.result( Bound.new( defn).get_binding)
             rescue
