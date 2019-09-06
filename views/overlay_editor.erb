@@ -1,0 +1,148 @@
+<HTML>
+  <head>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css"
+          integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+          crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"
+            integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og=="
+            crossorigin=""></script>
+    <script>
+        var map;
+        var labels_enabled = true;
+        var places = new Object;
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev, index) {
+            ev.dataTransfer.setData("index", index);
+            ev.dataTransfer.setData("dx", ev.offsetX);
+            ev.dataTransfer.setData("dy", ev.offsetY);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            var index = ev.dataTransfer.getData("index");
+            var dx    = ev.dataTransfer.getData("dx");
+            var dy    = ev.dataTransfer.getData("dy");
+            var el    = document.getElementById( "place" + index);
+            el.style.left = ev.offsetX - dx;
+            el.style.top  = ev.offsetY - dy;
+            update_place( index, el.offsetLeft + el.offsetWidth / 2, el.offsetTop + el.offsetHeight / 2);
+        }
+
+        function setDisplay( id, display) {
+            var el = document.getElementById(id);
+            if ( el ) {
+                el.style.display = display;
+            } else {
+                alert( "No element with id " + id);
+            }
+        }
+
+        function enable() {
+            labels_enabled = true;
+            setDisplay( 'disable', 'block');
+            setDisplay( 'enable', 'none');
+            setDisplay( 'save_map', 'none');
+            setDisplay( 'places', 'block');
+            setDisplay( 'mask', 'block');
+        }
+
+        function disable() {
+            labels_enabled = false;
+            setDisplay( 'disable', 'none');
+            setDisplay( 'enable', 'block');
+            setDisplay( 'save_map', 'block');
+            setDisplay( 'places', 'none');
+            setDisplay( 'mask', 'none');
+        }
+
+        function set_places() {
+            <%=
+              html = []
+              places.each_index do |i|
+                place = places[i]
+                html << "var point = map.latLngToLayerPoint( L.latLng(#{place['lat']}, #{place['lon']}));"
+                html << "var el = document.getElementById( 'place#{i}');"
+                html << "el.style.left = point.x - el.offsetWidth / 2;"
+                html << "el.style.top = point.y - el.offsetHeight / 2;"
+                html << "update_place( #{i}, point.x, point.y);"
+              end
+              html.join("\n");
+            %>
+        }
+
+        function saveMap() {
+            var centre = map.getCenter();
+            update_map( centre.lat, centre.lng, map.getZoom());
+            location.reload(true);
+        }
+
+        function update_place( index, x, y) {
+            var xhttp = new XMLHttpRequest();
+            xhttp.open( "POST", "/update_place/" + index + "/" + x + "/" + y);
+            xhttp.send();
+        }
+
+        function update_map( lat, lon, zoom) {
+            var xhttp = new XMLHttpRequest();
+            xhttp.open( "POST", "/update_map/" + lat + "/" + lon + "/" + zoom, false);
+            xhttp.send();
+        }
+
+    </script>
+    <style>
+      .container {position: relative; display: block; margin: 0px}
+      .overlay {position: absolute; display: block; margin: 0px}
+      .buttons {display: flex; margin: 20px}
+      button, option {font-size: 24px}
+      <%= ".panel {width: #{width}px; height: #{height}px; }" %>
+    </style>
+  </head>
+  <body style="margin: 0px">
+    <div class="buttons">
+      <button id="disable" type="button" onclick="disable()">Edit map</button>
+      <button id="enable" type="button" onclick="enable()">Edit places</button>
+      <button id="places" type="button" onclick="set_places()">Apply lat/lons</button>
+      <button id="save_map" type="button" onclick="saveMap()">Save map</button>
+    </div>
+    <div class="container panel">
+      <div id="mapid" class="panel overlay"></div>
+
+      <img id="mask"
+           class="panel overlay"
+           src="transparent.png"
+           style="z-index: 1001"
+           ondrop="drop(event)"
+           ondragover="allowDrop(event)">
+
+      <%=
+        html = []
+        places.each_index do |i|
+          place = places[i]
+          html << <<"IMG"
+<img id="place#{i}"
+   title="#{place['id']}"
+   draggable="true"
+   ondragstart="drag( event, #{i})"
+   src="star.png"
+   style="z-index: 1002; position: absolute; display: block; top: #{place['y']-8}; left: #{place['x']-8}">
+IMG
+        end
+        html.join( "\n")
+      %>
+
+    </div>
+    <script>
+        map = L.map('mapid').setView([<%= lat %>, <%= lon %>], <%= zoom %>);
+
+        L.tileLayer( <%= "'#{tiles}'" %>, {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        enable();
+    </script>
+  </body>
+</HTML>
