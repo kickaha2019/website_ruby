@@ -116,7 +116,7 @@ class Compiler
     puts "*** #{@errors} Errors in compilation" if @errors > 0
   end
 
-  # Find targets in the articles
+  # Find anchors in the articles
   def find_anchors(path)
 
     # Skip special directories
@@ -462,6 +462,7 @@ class Compiler
     links = {}
     @anchors.each_pair do |name,entry|
       links[name] = entry[:links].collect {|target| HTML::relative_path( path + '/index.html', target)}
+      entry[:urls] = links[name]
     end
 
     Dir.entries( path).each do |f|
