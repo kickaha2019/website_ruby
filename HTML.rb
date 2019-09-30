@@ -50,7 +50,7 @@ class HTML
 
   def anchor
     @n_anchors += 1
-    @output << "<a name=\"#{@n_anchors}\">"
+    @output << "<a name=\"#{@n_anchors}\"></a>"
   end
 
   def breadcrumbs( entries, title)

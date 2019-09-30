@@ -6,6 +6,17 @@
 #   Generated file directory
 #
 
+def load_filtered( path)
+  lines = IO.readlines( path)
+  lines.select! do |line|
+    ! (/var marker = L\.marker/ =~ line)
+  end
+  lines.select! do |line|
+    ! (/marker\.bindPopup/ =~ line)
+  end
+  lines.join( "\n")
+end
+
 def check_golden_files( dir)
   errors = 0
 
@@ -19,7 +30,7 @@ def check_golden_files( dir)
     elsif /\.html$/ =~ f
       puts "... Checking #{golden}"
       if File.exist?( generated)
-        if IO.read( golden) != IO.read( generated)
+        if load_filtered( golden) != load_filtered( generated)
           errors += 1
           puts "*** #{generated} doesn't match #{golden}"
         end
