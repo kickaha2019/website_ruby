@@ -47,7 +47,11 @@ class Link
 		return @bound.date if bind
 		nil
 	end
-	
+
+	def has_content?
+		return @bound.has_content?
+	end
+
 	def icon
 		return @bound.icon if bind
 		nil
