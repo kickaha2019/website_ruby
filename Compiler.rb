@@ -88,7 +88,7 @@ class Compiler
 
     # Find anchors in all the articles
     # amd also gather lat lons from KML files
-    @anchors = Hash.new {|h,k| h[k] = {lat:nil, lon:nil, links:[]}}
+    @anchors = Hash.new {|h,k| h[k] = {lat:nil, lon:nil, links:[], used:false}}
     find_anchors('')
 
     # Parse all the articles recursively
@@ -109,6 +109,11 @@ class Compiler
       html.finish do |error|
         article.error( 0, error)
       end
+    end
+
+    # Check anchors all used
+    @anchors.each_pair do |name, info|
+      error( name, nil, "Anchor not used") unless info[:used]
     end
 
     # Save the cache
@@ -479,6 +484,7 @@ class Compiler
   end
 
   def is_anchor_defined?(name)
+    @anchors[name][:used] = true
     ! @anchors[name][:lat].nil?
   end
 
