@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="9e440521-c7e4-4f23-9012-a98effea9bfa" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/add_gallery.rb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/check_links.rb" beforeDir="false" afterPath="$PROJECT_DIR$/check_links.rb" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -14,8 +14,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Ruby File" />
         <option value="Erb File" />
+        <option value="Ruby File" />
       </list>
     </option>
   </component>
@@ -56,7 +56,25 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Ruby.Check links">
+  <component name="RunManager" selected="Ruby.Add gallery">
+    <configuration name="Add gallery" type="RubyRunConfigurationType" factoryName="Ruby">
+      <module name="ruby" />
+      <RUBY_RUN_CONFIG NAME="RUBY_ARGS" VALUE="" />
+      <RUBY_RUN_CONFIG NAME="WORK DIR" VALUE="$MODULE_DIR$/../Articles/Diary/2020/New_Zealand/2 Godzilla Hotel" />
+      <RUBY_RUN_CONFIG NAME="SHOULD_USE_SDK" VALUE="false" />
+      <RUBY_RUN_CONFIG NAME="ALTERN_SDK_NAME" VALUE="" />
+      <RUBY_RUN_CONFIG NAME="myPassParentEnvs" VALUE="true" />
+      <EXTENSION ID="BundlerRunConfigurationExtension" bundleExecEnabled="false" />
+      <EXTENSION ID="JRubyRunConfigurationExtension" NailgunExecEnabled="false" />
+      <EXTENSION ID="RubyCoverageRunConfigurationExtension" track_test_folders="true" runner="rcov">
+        <COVERAGE_PATTERN ENABLED="true">
+          <PATTERN REGEXPS="/.rvm/" INCLUDED="false" />
+        </COVERAGE_PATTERN>
+      </EXTENSION>
+      <RUBY_RUN_CONFIG NAME="SCRIPT_PATH" VALUE="$MODULE_DIR$/add_gallery.rb" />
+      <RUBY_RUN_CONFIG NAME="SCRIPT_ARGS" VALUE="" />
+      <method v="2" />
+    </configuration>
     <configuration name="Build website" type="RubyRunConfigurationType" factoryName="Ruby">
       <module name="ruby" />
       <RUBY_RUN_CONFIG NAME="RUBY_ARGS" VALUE="-I ruby" />
@@ -153,6 +171,7 @@
       <item itemvalue="Ruby.Process YAML files" />
       <item itemvalue="Ruby.Check golden files" />
       <item itemvalue="Ruby.Check links" />
+      <item itemvalue="Ruby.Add gallery" />
     </list>
   </component>
   <component name="SpringUtil" SPRING_PRE_LOADER_OPTION="true" RAKE_SPRING_PRE_LOADER_OPTION="false" RAILS_SPRING_PRE_LOADER_OPTION="false" />
@@ -245,7 +264,9 @@
       <workItem from="1574533878425" duration="1628000" />
       <workItem from="1575150452028" duration="643000" />
       <workItem from="1575229264906" duration="1301000" />
-      <workItem from="1576963740997" duration="2276000" />
+      <workItem from="1576963740997" duration="2332000" />
+      <workItem from="1579811435697" duration="435000" />
+      <workItem from="1579816953580" duration="545000" />
     </task>
     <servers />
   </component>
@@ -321,6 +342,7 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/ruby@Check_links.rcov" NAME="Check links Coverage Results" MODIFIED="1576966397737" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
+    <SUITE FILE_PATH="coverage/ruby@Add_gallery.rcov" NAME="Add gallery Coverage Results" MODIFIED="1579817652669" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/../Articles/Diary/2020/New_Zealand/2 Godzilla Hotel" MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Overlay_editor.rcov" NAME="Overlay editor Coverage Results" MODIFIED="1561805039803" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Check_golden_files.rcov" NAME="Check golden files Coverage Results" MODIFIED="1572115555245" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Build_website.rcov" NAME="Build website Coverage Results" MODIFIED="1572734224687" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." MODULE_NAME="ruby" />
