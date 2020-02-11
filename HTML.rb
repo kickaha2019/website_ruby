@@ -15,7 +15,7 @@ class HTML
 
     if @@links.size == 0
       links.each_pair do |k,v|
-        @@links[k] = v['url']
+        @@links[k] = v
       end
     end
   end

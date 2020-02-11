@@ -49,8 +49,8 @@ class LinkChecker
 	end
 	
 	def find_links
-		YAML.load( File.open( ARTICLES + "/links.yaml")).each_pair do |link, info|
-			@links[info['url']] << "File: #{ARTICLES}/links.yaml, Name: #{link}"
+		YAML.load( File.open( ARTICLES + "/links.yaml")).each_pair do |link, url|
+			@links[url] << "File: #{ARTICLES}/links.yaml, Name: #{link}"
 		end
 
 		scan_articles( ARTICLES) do |f|
