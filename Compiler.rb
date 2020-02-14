@@ -87,12 +87,11 @@ class Compiler
     load_templates
 
     # Find anchors in all the articles
-    # amd also gather lat lons from KML files
+    # and also gather lat lons from KML files
     @anchors = Hash.new {|h,k| h[k] = {lat:nil, lon:nil, links:[], used:false}}
     find_anchors('')
 
     # Parse all the articles recursively
-    @articles = []
     params = load_parameters( {}, "")
     root_article = parse( nil, "", {})
 
@@ -100,6 +99,9 @@ class Compiler
     if ! system( "rsync -a --exclude='*.psd' #{@source}/resources #{@sink}")
       raise "Error synching resource files"
     end
+
+    # Prepare the articles now all articles parsed
+    prepare( root_article, root_article)
 
     # Regenerate the HTML files
     regenerate( [], root_article)
@@ -191,7 +193,7 @@ class Compiler
     # Generate article for the directory
     source_file = @source + path + "/index.txt"
     sink_file = @sink + path + "/index.txt"
-    @articles << dir_article = Article.new( source_file, sink_file, params, self)
+    dir_article = Article.new( source_file, sink_file, params, self)
     generated << 'index.html'
     generated << 'index.php'
     if File.exist?( source_file)
@@ -216,7 +218,7 @@ class Compiler
         parse( dir_article, path1, params)
       elsif m = /^(.*)\.txt$/.match( file)
         if file != 'index.txt'
-          @articles << child = Article.new( @source + path1, @sink + path1, params, self)
+          child = Article.new( @source + path1, @sink + path1, params, self)
           dir_article.add_child( child)
           parse_defn( path, file, child)
           generated << m[1]+".html"
@@ -322,6 +324,13 @@ class Compiler
     rescue NoMethodError => bang
       article.error( lineno, 'Unsupported directive: ' + verb)
       false
+    end
+  end
+
+  def prepare( root_article, article)
+    article.prepare( root_article)
+    article.children.each do |child|
+      prepare( root_article, child)
     end
   end
 
@@ -555,14 +564,6 @@ class Compiler
 
   def log( message)
     puts message
-  end
-
-  def match_article_filename( re)
-    matches = []
-    @articles.each do |article|
-      matches << article if re =~ article.source_filename
-    end
-    matches
   end
 
   # def relative_path( from, to)

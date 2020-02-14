@@ -312,10 +312,6 @@ class Article
     #File.exists?( source_filename( file))
   end
 
-  def match_article_filename( re)
-    @compiler.match_article_filename( re)
-  end
-
   def name
     if m = /(^|\/)([^\/]*)\.txt/.match( @source_filename)
       m[2]
@@ -343,6 +339,9 @@ class Article
 
   def php?
     @php
+  end
+
+  def prepare( root_article)
   end
 
   def prepare_name_for_index( text)
