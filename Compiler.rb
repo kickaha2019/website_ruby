@@ -80,7 +80,7 @@ class Compiler
 # Main logic
 # =================================================================
 
-# Compile
+  # Compile
   def compile
 
     # Load the templates
@@ -94,7 +94,7 @@ class Compiler
     # Parse all the articles recursively
     @articles = []
     params = load_parameters( {}, "")
-    parse( nil, "", {})
+    root_article = parse( nil, "", {})
 
     # Sync the resource files
     if ! system( "rsync -a --exclude='*.psd' #{@source}/resources #{@sink}")
@@ -102,14 +102,7 @@ class Compiler
     end
 
     # Regenerate the HTML files
-    @articles.each do |article|
-      html = HTML.new( @sink, sink_filename( article.sink_filename), @links, @templates)
-      html.start
-      article.to_html( html)
-      html.finish do |error|
-        article.error( 0, error)
-      end
-    end
+    regenerate( [], root_article)
 
     # Check anchors all used
     @anchors.each_pair do |name, info|
@@ -265,6 +258,8 @@ class Compiler
         FileUtils.remove_file( path1)
       end
     end
+
+    dir_article
   end
 
   def parse_defn( path, defn, article)
@@ -372,6 +367,19 @@ class Compiler
       raise
     end
     lineno
+  end
+
+  def regenerate( parents, article)
+    html = HTML.new( @sink, sink_filename( article.sink_filename), @links, @templates)
+    html.start
+    article.to_html( parents, html)
+    html.finish do |error|
+      article.error( 0, error)
+    end
+
+    article.children.each do |child|
+      regenerate( parents + [article], child) if child.is_a?( Article)
+    end
   end
 
   def sort( articles, order)

@@ -333,10 +333,10 @@ class HTML
     @output << "<TR>"
   end
 
-  def text( lines, float)
+  def text( parents, lines, float)
     @output << "<DIV CLASS=\"text\" STYLE=\"min-height: #{@float_height}px\">"
     if float
-      float.call( self)
+      float.call( parents, self)
     end
 
     lines.each do |line|

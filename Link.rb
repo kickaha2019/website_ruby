@@ -5,8 +5,6 @@
 =end
 
 class Link
-	attr_accessor :parent
-	
 	def initialize( article, lineno, link, title=nil)
 		@article  = article
 		@lineno   = lineno

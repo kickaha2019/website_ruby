@@ -7,7 +7,7 @@
 require 'fileutils'
 
 class Article
-    attr_accessor :parent, :content_added
+    attr_accessor :content_added
 
   def initialize( source, sink, params, compiler)
     @source_filename = source
@@ -18,13 +18,12 @@ class Article
     @content = []
     @children = []
     @children_sorted = false
-    @parent = nil
     @float = nil
     @icon = nil
     @php = false
 
-    add_content do |html|
-      index( html, 0)
+    add_content do |parents, html|
+      index( parents, html, 0)
       if (children.size == 0) && index_images?
         html.heading( prettify( title))
       end
@@ -37,7 +36,6 @@ class Article
   def add_child( article)
     @children << article
     @children_sorted = false
-    article.parent = self
   end
 
   def add_content( &block)
@@ -125,6 +123,14 @@ class Article
     end
 
     return w, h
+  end
+
+  def create_directory( path)
+    path = File.dirname( path)
+    unless File.exist?( path)
+      create_directory( path)
+      Dir.mkdir( path)
+    end
   end
 
   def date
@@ -230,16 +236,12 @@ class Article
     @icon
   end
 
-  def index( html, lineno)
+  def index( parents, html, lineno)
     if index_images?
-      index_using_images( html, lineno)
+      index_using_images( parents, html, lineno)
     else
-      ancestors, ancestor = [], parent
-      while ! ancestor.nil?
-        ancestors << [ancestor.sink_filename, prettify( ancestor.title)]
-        ancestor = ancestor.parent
-      end
-      html.breadcrumbs( ancestors.reverse, prettify( title))
+      ancestors = parents.collect {|p| [p.sink_filename, p.title]}
+      html.breadcrumbs( ancestors, prettify( title))
 
       if index_children?
         html.children( children.collect {|child| [child.sink_filename, prettify( child.title)]})
@@ -272,30 +274,25 @@ class Article
             prettify( page.title))
   end
 
-  def index_using_images( html, lineno)
+  def index_using_images( parents, html, lineno)
     html.start_index
 
-    if not parent.nil?
-      home = parent
-      while not home.parent.nil?
-        home = home.parent
-      end
-
-      index_resource( lineno, html, 'home', home)
-      if parent != home
-        index_resource( lineno, html, 'up', parent)
+    if parents.size > 0
+      index_resource( lineno, html, 'home', parents[0])
+      if parents.size > 1
+        index_resource( lineno, html, 'up', parents[-1])
       end
     end
 
-    if n = neighbour(-1)
+    if n = neighbour( parents,-1)
       index_resource( lineno, html, 'left', n)
     end
 
-    if n = neighbour(1)
+    if n = neighbour( parents, 1)
       index_resource( lineno, html, 'right', n)
     end
 
-    if (@children.size > 0) && (not parent.nil?)
+    if (@children.size > 0) && (parents.size > 0)
       html.add_index_title( prettify( title))
     end
 
@@ -327,8 +324,8 @@ class Article
     end
   end
 
-  def neighbour( dir)
-    neighbours = siblings.select {|a| a.has_content?}
+  def neighbour( parents, dir)
+    neighbours = siblings( parents).select {|a| a.has_content?}
     index = -2
 
     neighbours.each_index do |i|
@@ -397,15 +394,12 @@ class Article
       #	puts "***** Missing " + info[:sink_filename]
       #end
 
+      create_directory( sf = @compiler.sink_filename( file))
       if w < info[:width] or h < info[:height]
-        cmd = ["scripts/scale.csh"]
-        cmd << file
-        cmd << @compiler.sink_filename( file)
-        cmd << w.to_s
-        cmd << h.to_s
+        cmd = ["scripts/scale.csh", file, sf, w.to_s, h.to_s]
         raise "Error scaling [#{file}]" if not system( cmd.join( " "))
       else
-        FileUtils.cp( file, @compiler.sink_filename( file))
+        FileUtils.cp( file, sf)
       end
 
       info[:sink_filename]  = @compiler.sink_filename( file)
@@ -507,9 +501,9 @@ class Article
     end
   end
 
-  def siblings
-    return [] if @parent.nil?
-    @parent.children
+  def siblings( parents)
+    return [] if parents.size == 0
+    parents[-1].children
   end
 
   def sink_filename
@@ -524,16 +518,16 @@ class Article
     @title ? @title : "Home"
   end
 
-  def to_html( html)
+  def to_html( parents, html)
     ensure_no_float
     html.start_page( get("TITLE"))
     html.start_body
     html.start_content
     @content.each do |item|
       if item.is_a?( Array)
-        item[0].call( [html, item[1]])
+        item[0].call( [parents, html, item[1]])
       else
-        item.call( html)
+        item.call( parents, html)
       end
     end
     html.end_content

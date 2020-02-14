@@ -11,7 +11,7 @@ class Commands
 			end
 		end
 
-		article.add_content do |html|
+		article.add_content do |parents, html|
 			html.anchor
 		end
 	end
@@ -26,7 +26,7 @@ class Commands
 		if entry.size < 1
 			article.error( lineno, "No lines for code")
 		else
-			article.add_content do |html|
+			article.add_content do |parents, html|
 				html.code( entry) do |error|
 					article.error( lineno, error)
 				end
@@ -44,7 +44,7 @@ class Commands
 		t = convert_date( article, lineno, entry[0])
 		article.set_date( t)
 		
-		article.add_content do |html|
+		article.add_content do |parents, html|
 			html.date( t) do |error|
 				article.error( lineno, error)
 			end
@@ -53,18 +53,18 @@ class Commands
 	
 	def Gallery( article, lineno, entry)
 		article.ensure_no_float
-		article.add_content do |html|
+		article.add_content do |parents, html|
 			html.start_gallery
 		end
 	
 		@@gallery_index += 1
 		entry_blocks( entry, lineno) do |block, block_lineno|
-			article.add_content do |html|
+			article.add_content do |parents, html|
 				html.start_cell
 				html.start_div
 			end
 			add_image( article, block_lineno, block, 'gallery_cell', 'GALLERY', false, @@gallery_index)
-			article.add_content do |html|
+			article.add_content do |parents, html|
 				html.end_div
 				html.start_div
 				html.write( block[1]) if not block[1].nil?
@@ -73,7 +73,7 @@ class Commands
 			end
 		end
 		
-		article.add_content do |html|
+		article.add_content do |parents, html|
 			html.end_gallery
 		end
 	end
@@ -84,7 +84,7 @@ class Commands
 		if entry.size != 1
 			article.error( lineno, "Heading takes one line")
 		else
-			article.add_content do |html|
+			article.add_content do |parents, html|
 				html.heading( entry[0])
 			end
 		end
@@ -96,7 +96,7 @@ class Commands
 		if entry.size < 1
 			article.error( lineno, "No lines for HTML")
 		else
-			article.add_content do |html|
+			article.add_content do |parents, html|
 				html.html( entry) do |error|
 					article.error( lineno, error)
 				end
@@ -142,7 +142,7 @@ class Commands
 		if entry.size < 1
 			article.error( lineno, "No lines for code")
 		else
-			article.add_content do |html|
+			article.add_content do |parents, html|
 				html.php( entry) do |error|
 					article.error( lineno, error)
 				end
@@ -157,7 +157,7 @@ class Commands
 	
 	def Table( article, lineno, entry)
 		article.ensure_no_float
-		article.add_content do |html|
+		article.add_content do |parents, html|
 			html.start_table( article.get( "TABLE_CLASS"))
 		end
 	
@@ -168,7 +168,7 @@ class Commands
 		end
 
 		entry_lines( entry, lineno) do |line, line_lineno|
-			article.add_content do |html|
+			article.add_content do |parents, html|
 				html.start_table_row
 				fields = line.split('|')
 				fields.each do |field|
@@ -185,7 +185,7 @@ class Commands
 			end
 		end
 		
-		article.add_content do |html|
+		article.add_content do |parents, html|
 			html.end_table
 		end
 	end
@@ -196,8 +196,8 @@ class Commands
 		if entry.size < 1
 			article.error( lineno, "No lines for text")
 		else
-			article.add_content do |html|
-				html.text( entry, float) do |error|
+			article.add_content do |parents, html|
+				html.text( parents, entry, float) do |error|
 					article.error( lineno, error)
 				end
 			end
@@ -250,7 +250,7 @@ class Commands
 			article.set_image_caption( lineno, path, [entry[1]])
 		end
 		
-		article.add_image( float, lineno) do |html|
+		article.add_image( float, lineno) do |parents, html|
 			tw = article.get( type + '_WIDTH').to_i
 			th = article.get( type + '_HEIGHT').to_i
 			alt_text = article.get_image_caption( path)
