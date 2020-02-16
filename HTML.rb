@@ -53,13 +53,13 @@ class HTML
     @output << "<a name=\"#{@n_anchors}\"></a>"
   end
 
-  def breadcrumbs( entries, title)
-    @output << "<DIV ID=\"breadcrumbs\" CLASS=\"breadcrumbs\">"
-    entries.each do |entry|
-      rp = relative_path( @path, entry[0])
-      @output << "<A CLASS=\"index\" HREF=\"#{rp}\">#{entry[1]}</A> &raquo; "
+  def breadcrumbs( parents, title)
+    @output << "<DIV ID=\"breadcrumbs\" CLASS=\"breadcrumbs content\">"
+    parents.each do |parent|
+      rp = relative_path( @path, parent.sink_filename)
+      @output << "<A CLASS=\"index\" HREF=\"#{rp}\">#{HTML.prettify( parent.title)}</A> &raquo; "
     end
-    @output << "<SPAN>" + check( title) + "</SPAN>"
+    @output << "<SPAN>" + check( HTML.prettify(title)) + "</SPAN>"
     @output << "</DIV>"
   end
 
@@ -107,15 +107,7 @@ class HTML
     end
   end
 
-  def end_body
-    @output << "</div>"
-  end
-
   def end_cell
-    @output << "</div>"
-  end
-
-  def end_content
     @output << "</div>"
   end
 
@@ -253,6 +245,19 @@ class HTML
     @output << "?>"
   end
 
+  def self.prettify( name)
+    if m = /^\d+[:_](.+)$/.match( name)
+      name = m[1]
+    end
+    if name.downcase == name
+      name.split( "_").collect do |part|
+        part.capitalize
+      end.join( " ")
+    else
+      name.gsub( "_", " ")
+    end
+  end
+
   def relative_path( from, to)
     HTML::relative_path( from, to)
   end
@@ -272,20 +277,12 @@ class HTML
   def start
   end
 
-  def start_body
-    @output << "<div class=\"body\">"
-  end
-
   def start_code
     @output << "<div class=\"code\">"
   end
 
   def start_cell
     @output << "<div class=\"cell\">"
-  end
-
-  def start_content
-    @output << "<div class=\"content\">"
   end
 
   def start_div( css_class=nil)

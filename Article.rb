@@ -23,6 +23,8 @@ class Article
     @php = false
 
     add_content do |parents, html|
+      html.breadcrumbs( parents, title) if parents.size > 0
+
       index( parents, html, 0)
       if (children.size == 0) && index_images?
         html.heading( prettify( title))
@@ -34,8 +36,8 @@ class Article
   end
 
   def add_child( article)
-    @children << article
     @children_sorted = false
+    @children << article
   end
 
   def add_content( &block)
@@ -240,9 +242,6 @@ class Article
     if index_images?
       index_using_images( parents, html, lineno)
     else
-      ancestors = parents.collect {|p| [p.sink_filename, p.title]}
-      html.breadcrumbs( ancestors, prettify( title))
-
       if index_children?
         html.children( children.collect {|child| [child.sink_filename, prettify( child.title)]})
       end
@@ -276,13 +275,6 @@ class Article
 
   def index_using_images( parents, html, lineno)
     html.start_index
-
-    if parents.size > 0
-      index_resource( lineno, html, 'home', parents[0])
-      if parents.size > 1
-        index_resource( lineno, html, 'up', parents[-1])
-      end
-    end
 
     if n = neighbour( parents,-1)
       index_resource( lineno, html, 'left', n)
@@ -440,16 +432,7 @@ class Article
   end
 
   def prettify( name)
-    if m = /^\d+[:_](.+)$/.match( name)
-      name = m[1]
-    end
-    if name.downcase == name
-      name.split( "_").collect do |part|
-         part.capitalize
-      end.join( " ")
-    else
-      name.gsub( "_", " ")
-    end
+    HTML.prettify( name)
   end
 
   def root_source_filename( file)
@@ -520,8 +503,6 @@ class Article
   def to_html( parents, html)
     ensure_no_float
     html.start_page( get("TITLE"))
-    html.start_body
-    html.start_content
     @content.each do |item|
       if item.is_a?( Array)
         item[0].call( [parents, html, item[1]])
@@ -529,8 +510,6 @@ class Article
         item.call( parents, html)
       end
     end
-    html.end_content
-    html.end_body
     html.end_page
   end
 

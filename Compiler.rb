@@ -52,11 +52,11 @@ class Compiler
   end
 
   # Initialisation
-  def initialize( source, sink, webroot, cache_file, debug_page=nil)
+  def initialize( source, sink, cache_file, debug_pages=nil)
     @errors = 0
     @source = source
     @sink = sink
-    @debug_page=debug_page
+    @debug_pages = debug_pages.nil? ? nil : Regexp.new( debug_pages)
     @cache_file=cache_file
     @old_cache={}
     @new_cache={}
@@ -114,6 +114,12 @@ class Compiler
     # Save the cache
     save_cache
     puts "*** #{@errors} Errors in compilation" if @errors > 0
+  end
+
+  def debug_hook( article)
+    if @debug_pages && (@debug_pages =~ article.sink_filename)
+      puts "Debugging #{article.title}"
+    end
   end
 
   # Find anchors in the articles
@@ -265,6 +271,7 @@ class Compiler
   end
 
   def parse_defn( path, defn, article)
+    debug_hook( article)
     verb = nil
     entry = nil
     lineno = readlines( path, defn, article) do |lineno, line|
@@ -321,6 +328,7 @@ class Compiler
 
     begin
       @commands.send( verb.to_sym, article, lineno, entry)
+      true
     rescue NoMethodError => bang
       article.error( lineno, 'Unsupported directive: ' + verb)
       false
@@ -328,6 +336,7 @@ class Compiler
   end
 
   def prepare( root_article, article)
+    debug_hook( article)
     article.prepare( root_article)
     article.children.each do |child|
       prepare( root_article, child)
@@ -379,6 +388,7 @@ class Compiler
   end
 
   def regenerate( parents, article)
+    debug_hook( article)
     html = HTML.new( @sink, sink_filename( article.sink_filename), @links, @templates)
     html.start
     article.to_html( parents, html)
