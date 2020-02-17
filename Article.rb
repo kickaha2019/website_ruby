@@ -24,10 +24,12 @@ class Article
 
     add_content do |parents, html|
       html.breadcrumbs( parents, title) if parents.size > 0
+      html.start_div( 'payload content')
 
       index( parents, html, 0)
-      if (children.size == 0) && index_images?
-        html.heading( prettify( title))
+
+      if @content.size > 1
+        html.start_div( 'story')
       end
     end
 
@@ -274,29 +276,21 @@ class Article
   end
 
   def index_using_images( parents, html, lineno)
-    html.start_index
+    html.start_indexes
 
-    if n = neighbour( parents,-1)
-      index_resource( lineno, html, 'left', n)
-    end
-
-    if n = neighbour( parents, 1)
-      index_resource( lineno, html, 'right', n)
-    end
-
-    if (@children.size > 0) && (parents.size > 0)
-      html.add_index_title( prettify( title))
-    end
-
-    if index_children?
+    if index_children? && (@children.size > 0)
       children.each do |child|
         index_resource( lineno, html, 'down', child, child.icon)
       end
+    else
+      siblings( parents).select {|a| a.has_content?}.each do |sibling|
+        index_resource( lineno, html, 'down', sibling, sibling.icon) unless sibling == self
+      end
     end
 
-    (0..5).each {html.add_index_dummy}
+    (0..7).each {html.add_index_dummy}
 
-    html.end_index
+    html.end_indexes
   end
 
   def is_source_file?( file)
@@ -310,19 +304,6 @@ class Article
     else
       @source_filename.split( "/")[-1]
     end
-  end
-
-  def neighbour( parents, dir)
-    neighbours = siblings( parents).select {|a| a.has_content?}
-    index = -2
-
-    neighbours.each_index do |i|
-      index = i if neighbours[i] == self
-    end
-
-    index += dir
-    return nil if (index < 0) || (index >= neighbours.size)
-    neighbours[index]
   end
 
   def next_gallery_index
@@ -503,6 +484,7 @@ class Article
   def to_html( parents, html)
     ensure_no_float
     html.start_page( get("TITLE"))
+
     @content.each do |item|
       if item.is_a?( Array)
         item[0].call( [parents, html, item[1]])
@@ -510,6 +492,11 @@ class Article
         item.call( parents, html)
       end
     end
+
+    if @content.size > 1
+      html.end_div
+    end
+    html.end_div
     html.end_page
   end
 

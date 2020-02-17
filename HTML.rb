@@ -34,10 +34,8 @@ class HTML
   end
 
   def add_index_dummy
-    start_cell
-    start_div 'dummy'
+    start_div 'index dummy'
     end_div
-    end_cell
   end
 
   def add_index_title( text)
@@ -54,10 +52,10 @@ class HTML
   end
 
   def breadcrumbs( parents, title)
-    @output << "<DIV ID=\"breadcrumbs\" CLASS=\"breadcrumbs content\">"
+    @output << "<DIV CLASS=\"breadcrumbs content\">"
     parents.each do |parent|
       rp = relative_path( @path, parent.sink_filename)
-      @output << "<A CLASS=\"index\" HREF=\"#{rp}\">#{HTML.prettify( parent.title)}</A> &raquo; "
+      @output << "<A HREF=\"#{rp}\">#{HTML.prettify( parent.title)}</A> &raquo; "
     end
     @output << "<SPAN>" + check( HTML.prettify(title)) + "</SPAN>"
     @output << "</DIV>"
@@ -124,6 +122,10 @@ class HTML
   end
 
   def end_index
+    @output << "</div>"
+  end
+
+  def end_indexes
     @output << "</div>"
   end
 
@@ -303,6 +305,10 @@ class HTML
 
   def start_index
     @output << "<div class=\"index\">"
+  end
+
+  def start_indexes
+    @output << "<div class=\"indexes\">"
   end
 
   def start_lightbox( file, title, gallery_index=nil)
