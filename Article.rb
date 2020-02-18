@@ -241,13 +241,24 @@ class Article
   end
 
   def index( parents, html, lineno)
+    html.start_indexes
+
     if index_images?
       index_using_images( parents, html, lineno)
+      text_size_classes = 'size0'
     else
-      if index_children?
-        html.children( children.collect {|child| [child.sink_filename, prettify( child.title)]})
-      end
+      text_size_classes = 'size0 size1 size2 size3'
     end
+
+
+    if index_children? && (@children.size > 0)
+      to_index = children
+    else
+      to_index = siblings( parents).select {|a| a.has_content? && (a != self)}
+    end
+    html.children( to_index, text_size_classes)
+
+    html.end_indexes
   end
 
   def index_children?
@@ -270,14 +281,12 @@ class Article
     end
 
     html.add_index( image,
-            * index_image_dimensions,
-            page.sink_filename,
-            prettify( page.title))
+                    * index_image_dimensions,
+                    page.sink_filename,
+                    prettify( page.title))
   end
 
   def index_using_images( parents, html, lineno)
-    html.start_indexes
-
     if index_children? && (@children.size > 0)
       children.each do |child|
         index_resource( lineno, html, 'down', child, child.icon)
@@ -289,8 +298,6 @@ class Article
     end
 
     (0..7).each {html.add_index_dummy}
-
-    html.end_indexes
   end
 
   def is_source_file?( file)

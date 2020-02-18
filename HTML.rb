@@ -21,8 +21,7 @@ class HTML
   end
 
   def add_index( img, w, h, target, alt_text)
-    start_cell
-    @output << "<A CLASS=\"index\" HREF=\"#{relative_path( @path, target)}\">"
+    @output << "<A CLASS=\"index size1 size2 size3\" HREF=\"#{relative_path( @path, target)}\">"
     start_div
     image( img, w, h, alt_text, false)
     end_div
@@ -30,11 +29,10 @@ class HTML
     write( alt_text)
     end_div
     @output << "</A>"
-    end_cell
   end
 
   def add_index_dummy
-    start_div 'index dummy'
+    start_div 'index dummy size1 size2 size3'
     end_div
   end
 
@@ -70,15 +68,13 @@ class HTML
     text
   end
 
-  def children( entries)
-    @output << "<DIV CLASS=\"children\">"
-    sep = ''
-    entries.each do |entry|
-      rp = relative_path( @path, entry[0])
-      @output << "#{sep}<A CLASS=\"index\" HREF=\"#{rp}\">#{entry[1]}</A>"
-      sep = ' &bullet; '
+  def children( articles, classes)
+    articles.each do |article|
+      @output << "<DIV CLASS=\"index_text #{classes}\">"
+      rp = relative_path( @path, article.sink_filename)
+      @output << " &raquo; <A HREF=\"#{rp}\">#{HTML.prettify( article.title)}</A>"
+      @output << "</DIV>"
     end
-    @output << "</DIV>"
   end
 
   def code( lines)
