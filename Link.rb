@@ -5,36 +5,28 @@
 =end
 
 class Link
+  attr_reader :date, :icon, :sink_filename, :title
+
 	def initialize( article, lineno, link, title=nil)
-		@article  = article
-		@lineno   = lineno
-		@link     = link
-		@title    = title
-		@bound    = nil
+		@article       = article
+		@lineno        = lineno
+		@link          = link
+		@title         = title
+    @date          = nil
+    @icon          = nil
+    @sink_filename = nil
 	end
 
 	def children
-		return @bound.children if @bound
 		[]
 	end
 	
 	def children?
-		return @bound.children? if @bound
 		false
-	end
-	
-	def date
-		return @bound.date if @bound
-		nil
 	end
 
 	def has_content?
-		return @bound.has_content?
-	end
-
-	def icon
-		return @bound.icon if @bound
-		nil
+		false
 	end
 
 	def match_article_filename( article, re, matches)
@@ -54,18 +46,11 @@ class Link
 		elsif matches.size > 1
 			@article.error( @lineno, "Ambiguous link")
 		else
-			@bound = matches[0]
+			bound          = matches[0]
+      @date          = bound.date
+      @icon          = bound.icon
+      @sink_filename = bound.sink_filename
+      @title         = bound.title unless @title
 		end
-	end
-
-	def sink_filename
-		return @bound.sink_filename if @bound
-		"???"
-	end
-	
-	def title
-		return @title if @title
-		return @bound.title if @bound
-		"???"
 	end
 end
