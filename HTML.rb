@@ -21,7 +21,7 @@ class HTML
   end
 
   def add_index( img, w, h, target, alt_text)
-    @output << "<A CLASS=\"index size1 size2 size3\" HREF=\"#{relative_path( @path, target)}\">"
+    @output << "<A CLASS=\"index t0 size1 size2 size3\" HREF=\"#{relative_path( @path, target)}\">"
     start_div
     image( img, w, h, alt_text, false)
     end_div
@@ -50,12 +50,12 @@ class HTML
   end
 
   def breadcrumbs( parents, title)
-    @output << "<DIV CLASS=\"breadcrumbs content\">"
+    @output << "<DIV CLASS=\"breadcrumbs t0 content\">"
     parents.each do |parent|
       rp = relative_path( @path, parent.sink_filename)
       @output << "<A HREF=\"#{rp}\">#{HTML.prettify( parent.title)}</A> &raquo; "
     end
-    @output << "<SPAN>" + check( HTML.prettify(title)) + "</SPAN>"
+    @output << '<SPAN>' + check( HTML.prettify(title)) + '</SPAN>'
     @output << "</DIV>"
   end
 
@@ -70,7 +70,7 @@ class HTML
 
   def children( articles, classes)
     articles.each do |article|
-      @output << "<DIV CLASS=\"index_text #{classes}\">"
+      @output << "<DIV CLASS=\"index_text t0 #{classes}\">"
       rp = relative_path( @path, article.sink_filename)
       @output << " &raquo; <A HREF=\"#{rp}\">#{HTML.prettify( article.title)}</A>"
       @output << "</DIV>"
@@ -304,7 +304,7 @@ class HTML
   end
 
   def start_indexes
-    @output << "<div class=\"indexes\">"
+    @output << "<div class=\"indexes t0\">"
   end
 
   def start_lightbox( file, title, gallery_index=nil)

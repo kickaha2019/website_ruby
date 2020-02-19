@@ -29,7 +29,7 @@ class Article
       index( parents, html, 0)
 
       if @content.size > 1
-        html.start_div( 'story')
+        html.start_div( 'story t1')
       end
     end
 
