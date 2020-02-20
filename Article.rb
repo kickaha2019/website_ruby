@@ -7,7 +7,7 @@
 require 'fileutils'
 
 class Article
-    attr_accessor :content_added
+    attr_accessor :content_added, :images
 
   def initialize( source, sink, params, compiler)
     @source_filename = source
@@ -18,7 +18,7 @@ class Article
     @content = []
     @children = []
     @children_sorted = false
-    @float = nil
+    @images   = []
     @icon = nil
     @php = false
 
@@ -46,30 +46,9 @@ class Article
     @content << block
   end
 
-  def add_image( float, lineno, &block)
-    if float
-      @float = block
-    else
-      add_content( &block)
-    end
+  def add_image( lineno, image, caption)
+    @images << describe_image( lineno, image, caption)
   end
-
-  # def add_image( entry, param, lineno)
-  # 	if entry.size < 1 or entry.size > 2
-  # 		error( lineno, "Bad image declaration")
-  # 		return
-  # 	end
-  #
-  # 	alt_text = entry[1] ? entry[1] : (@title ? prettify(@title) : get( "TITLE"))
-  # 	HTMLImage.new( self, lineno, source_filename(entry[0]), alt_text, param)
-  # 	#HTMLImage.new( self, lineno, source_filename(entry[0]), alt_text, param)
-  # end
-  #
-  # def add_left_right( entry, side, lineno)
-  # 	if ensure_no_float( lineno) and (html = add_image( entry, "FLOAT", lineno))
-  # 		@float = HTMLPageFloat.new( self, lineno, html, side)
-  # 	end
-  # end
 
   def add_text_line( lineno, line, sep, lines)
     return if line == ""
@@ -144,13 +123,41 @@ class Article
     @date # ? @date : Time.gm( 1970, "Jan", 1)
   end
 
-  def ensure_no_float( lineno=nil)
-    if @float
-      error( lineno, "Left and right must be paired up with text blocks")
-      false
-    else
-      true
+  def describe_image( lineno, image_filename, caption)
+    if /[\.\["\|<>]/ =~ caption
+      error( lineno, "Image caption containing special character: " + caption)
+      caption = nil
     end
+
+    caption = "#{source_filename}:#{lineno}" unless caption
+    fileinfo = @compiler.fileinfo( image_filename)
+    info = nil
+    ts = File.mtime( image_filename).to_i
+
+    if File.exist?( fileinfo)
+      info = IO.readlines( fileinfo).collect {|line| line.chomp.to_i}
+      info = nil unless info[0] == ts
+    end
+
+    unless info
+      info = [ts, * get_image_dims( lineno, image_filename)]
+      File.open( fileinfo, 'w') do |io|
+        io.puts info.collect {|i| i.to_s}.join( "\n")
+      end
+
+      to_delete = []
+      sink_dir = File.dirname( @compiler.sink_filename( image_filename))
+
+      Dir.entries( sink_dir).each do |f|
+        if m = /^(.*)_\d+_\d+(\..*)$/.match( f)
+          to_delete << f if image_filename.split('/')[-1] == (m[1] + m[2])
+        end
+      end
+
+      to_delete.each {|f| File.delete( sink_dir + '/' + f)}
+    end
+
+    {lineno:lineno, image:image_filename, caption:caption, width:info[1], height:info[2]}
   end
 
   def error( lineno, msg)
@@ -164,18 +171,9 @@ class Article
       nil
   end
 
-  def float
-    @float, f = nil, @float
-    f
-  end
-
   def get( name)
     raise "Parameter [#{name}] not set" if @params[name].nil?
     @params[ name]
-  end
-
-  def get_image_caption( image_filename)
-    @compiler.get_image_caption( image_filename)
   end
 
   def get_image_dims( lineno, filename)
@@ -229,15 +227,17 @@ class Article
   end
 
   def icon
-    if @icon.nil? && index_images?
-      children.each do |child|
-        if icon = child.icon
-          return icon
-        end
+    return @icon if @icon
+
+    return @images[0] if @images.size > 0
+
+    children.each do |child|
+      if icon = child.icon
+        return icon
       end
     end
 
-    @icon
+    nil
   end
 
   def index( parents, html, lineno)
@@ -391,32 +391,20 @@ class Article
     info[:sink_filename]
   end
 
-  def prepare_thumbnail( lineno, file, width, height)
-    key, info = @compiler.get_cache( file, "-#{width}-#{height}") do |filename|
-      get_image_dims( lineno, filename)
-    end
-
-    return nil if not info
-
+  def prepare_thumbnail( lineno, info, width, height)
     w,h = shave_thumbnail( width, height, info[:width], info[:height])
-    thumbfile = file[0..-5] + "-#{width}-#{height}" + file[-4..-1]
+    file = info[:image]
+    thumbfile = @compiler.sink_filename( file[0..-5] + "-#{width}-#{height}" + file[-4..-1])
 
-    if info[:sink_filename]   != @compiler.sink_filename( thumbfile)    or
-        not File.exists?( info[:sink_filename])                         or
-        info[:sink_timestamp] != File.mtime( info[:sink_filename]).to_i
-
-      info[:sink_filename]  = @compiler.sink_filename( thumbfile)
+    if not File.exists?( thumbfile)
       cmd = ["scripts/thumbnail.csh"]
       cmd << file
-      cmd << info[:sink_filename]
+      cmd << thumbfile
       [w,h,width,height].each {|i| cmd << i.to_s}
-      raise "Error scaling [#{file}]" if not system( cmd.join( " "))
-
-      info[:sink_timestamp] = File.mtime( info[:sink_filename]).to_i
-      @compiler.append_cache( key, info)
+      raise "Error scaling [#{info[:image]}]" if not system( cmd.join( " "))
     end
 
-    info[:sink_filename]
+    thumbfile
   end
 
   def prettify( name)
@@ -431,22 +419,13 @@ class Article
     @date = t if @date.nil?
   end
 
-  def set_icon( path)
+  def set_icon( lineno, path)
     if @icon.nil?
       if not File.exists?( path)
         error( 0, "Icon #{path} not found")
       else
-        @icon = path
+        @icon = describe_image( lineno, path, '')
       end
-    end
-  end
-
-  def set_image_caption( lineno, image_filename, caption)
-    caption = caption.join( " ")
-    if /[\.\["\|<>]/ =~ caption
-      error( lineno, "Image caption containing special character: " + caption)
-    else
-      @compiler.set_image_caption( image_filename, caption)
     end
   end
 
@@ -489,7 +468,6 @@ class Article
   end
 
   def to_html( parents, html)
-    ensure_no_float
     html.start_page( get("TITLE"))
 
     @content.each do |item|

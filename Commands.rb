@@ -17,12 +17,10 @@ class Commands
 	end
 
 	def Centre( article, lineno, entry)
-		article.ensure_no_float
-		add_image( article, lineno, entry, 'centre', 'CENTRE', false)
+		add_image( article, lineno, entry)
 	end
 	
 	def Code( article, lineno, entry)
-		article.ensure_no_float
 		if entry.size < 1
 			article.error( lineno, "No lines for code")
 		else
@@ -35,7 +33,6 @@ class Commands
 	end
 	
 	def Date( article, lineno, entry)
-		article.ensure_no_float
 		if entry.size != 1
 			article.error( lineno, "Dates should have one line in the entry")
 			return
@@ -52,35 +49,12 @@ class Commands
 	end
 	
 	def Gallery( article, lineno, entry)
-		article.ensure_no_float
-		article.add_content do |parents, html|
-			html.start_gallery
-		end
-	
-		@@gallery_index += 1
 		entry_blocks( entry, lineno) do |block, block_lineno|
-			article.add_content do |parents, html|
-				html.start_cell
-				html.start_div
-			end
-			add_image( article, block_lineno, block, 'gallery_cell', 'GALLERY', false, @@gallery_index)
-			article.add_content do |parents, html|
-				html.end_div
-				html.start_div
-				html.write( block[1]) if not block[1].nil?
-				html.end_div
-				html.end_cell
-			end
-		end
-		
-		article.add_content do |parents, html|
-			html.end_gallery
+			add_image( article, block_lineno, block)
 		end
 	end
 	
 	def Heading( article, lineno, entry)
-		article.ensure_no_float
-
 		if entry.size != 1
 			article.error( lineno, "Heading takes one line")
 		else
@@ -91,8 +65,6 @@ class Commands
 	end
 
 	def HTML( article, lineno, entry)
-		article.ensure_no_float
-
 		if entry.size < 1
 			article.error( lineno, "No lines for HTML")
 		else
@@ -105,29 +77,32 @@ class Commands
 	end
 	
 	def Icon( article, lineno, entry)
-		article.ensure_no_float
-
 		if entry.size != 1
 			article.error( lineno, "Icon takes one line for image filename")
 		else
 			path = entry[0]
 			if /^\// =~ path
-				article.set_icon( path)
+				article.set_icon( lineno, path)
 			else
 				path = abs_filename( article.source_filename, entry[0])
-				article.set_icon( path)
-				path = article.prepare_source_image( lineno, path)
+				article.set_icon( lineno, path)
 			end
 		end
 	end
-	
+
+	def Image( article, lineno, entry)
+		add_image( article, lineno, entry)
+	end
+
+	def Images( article, lineno, entry)
+		Gallery( article, lineno, entry)
+	end
+
 	def Left( article, lineno, entry)
-		article.ensure_no_float
-		add_image( article, lineno, entry, 'left', 'FLOAT', true)
+		add_image( article, lineno, entry)
 	end
 	
 	def Link( article, lineno, entry)
-		article.ensure_no_float
 		if (entry.size < 1) || (entry.size > 2)
 			article.error( lineno, "Links should have one or two lines in the entry")
 			return
@@ -137,7 +112,6 @@ class Commands
 	end
 	
 	def PHP( article, lineno, entry)
-		article.ensure_no_float
 		article.set_php
 		if entry.size < 1
 			article.error( lineno, "No lines for code")
@@ -151,12 +125,10 @@ class Commands
 	end
 
 	def Right( article, lineno, entry)
-		article.ensure_no_float
-		add_image( article, lineno, entry, 'right', 'FLOAT', true)
+		add_image( article, lineno, entry)
 	end
 	
 	def Table( article, lineno, entry)
-		article.ensure_no_float
 		article.add_content do |parents, html|
 			html.start_table( article.get( "TABLE_CLASS"))
 		end
@@ -191,13 +163,11 @@ class Commands
 	end
 	
 	def Text( article, lineno, entry)
-		float = article.float
-
 		if entry.size < 1
 			article.error( lineno, "No lines for text")
 		else
 			article.add_content do |parents, html|
-				html.text( parents, entry, float) do |error|
+				html.text( parents, entry) do |error|
 					article.error( lineno, error)
 				end
 			end
@@ -205,7 +175,6 @@ class Commands
 	end
 	
 	def Title( article, lineno, entry)
-		article.ensure_no_float
 		if entry.size != 1
 			article.error( lineno, "Title definition should be one line long")
 		elsif /[\["\|&<>]/ =~ entry[0]
@@ -225,19 +194,15 @@ class Commands
 		path + '/' + filename
 	end
 	
-	def add_image( article, lineno, entry, css_class, type, float, gallery_index=nil)
+	def add_image( article, lineno, entry)
 		if entry.size < 1 or entry.size > 2
 			article.error( lineno, "Bad image declaration")
 			return
 		end
 		
 		path = entry[0].strip
-		if /^\// =~ path
-			article.set_icon( path)
-		else
+		unless /^\// =~ path
 			path = abs_filename( article.source_filename, path)
-			article.set_icon( path)
-			path = article.prepare_source_image( lineno, path)
 		end
 
 		if not File.exists?( path)
@@ -246,23 +211,20 @@ class Commands
 			return
 		end
 
-		if entry.size == 2
-			article.set_image_caption( lineno, path, [entry[1]])
-		end
-		
-		article.add_image( float, lineno) do |parents, html|
-			tw = article.get( type + '_WIDTH').to_i
-			th = article.get( type + '_HEIGHT').to_i
-			alt_text = article.get_image_caption( path)
-			(w,h) = article.prepare_sink_image( lineno, path, tw, th)
-			html.start_div( css_class)
-			html.start_lightbox( path, alt_text, gallery_index)
-			html.image( path, w, h, alt_text, float) do |error|
-				article.error( lineno, error)
-			end
-			html.end_lightbox
-			html.end_div
-		end
+		article.add_image( lineno, path, entry[1])
+		# article.add_image( float, lineno) do |parents, html|
+		# 	tw = article.get( type + '_WIDTH').to_i
+		# 	th = article.get( type + '_HEIGHT').to_i
+		# 	alt_text = article.get_image_caption( path)
+		# 	(w,h) = article.prepare_sink_image( lineno, path, tw, th)
+		# 	html.start_div( css_class)
+		# 	html.start_lightbox( path, alt_text, gallery_index)
+		# 	html.image( path, w, h, alt_text, float) do |error|
+		# 		article.error( lineno, error)
+		# 	end
+		# 	html.end_lightbox
+		# 	html.end_div
+		# end
 	end
 	
 	def convert_date( article, lineno, text)

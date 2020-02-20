@@ -61,7 +61,6 @@ class Compiler
     @old_cache={}
     @new_cache={}
     @special_chars = {}
-    @image_captions = {}
     @commands = Commands.new
     @templates = {}
     @links = YAML.load( File.open( source + "/links.yaml"))
@@ -126,8 +125,7 @@ class Compiler
   def find_anchors(path)
 
     # Skip special directories
-    return if path == '/resources'
-    return if path == '/templates'
+    return if ['/resources', '/templates', '/fileinfo'].include?( path)
 
     # Loop over source files
     Dir.entries( @source + path).each do |file|
@@ -165,8 +163,7 @@ class Compiler
   def parse( parent, path, params)
 
     # Skip special directories
-    return if path == '/resources'
-    return if path == '/templates'
+    return if ['/resources', '/templates', '/fileinfo'].include?( path)
 
     # Do templating for any YAML files
     Dir.entries( @source+path).each do |file|
@@ -486,10 +483,6 @@ class Compiler
     return key, entry
   end
 
-  def get_image_caption( image_filename)
-    @image_captions[ image_filename]
-  end
-
   def get_local_links( path)
     links = {}
     @anchors.each_pair do |name,entry|
@@ -594,10 +587,6 @@ class Compiler
     end
   end
 
-  def set_image_caption( image_filename, caption)
-    @image_captions[ image_filename] = caption
-  end
-
   def sink( path)
     @sink + path
   end
@@ -650,5 +639,9 @@ class Compiler
 
   def to_xml_date( time)
     sprintf( "%04d-%02d-%02dT%02d:%02d:%02dZ", time.year, time.mon, time.day, time.hour, time.min, time.sec)
+  end
+
+  def fileinfo( filename)
+    @source + '/fileinfo/' + filename.gsub('/','.')
   end
 end

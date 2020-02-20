@@ -332,11 +332,8 @@ class HTML
     @output << "<TR>"
   end
 
-  def text( parents, lines, float)
-    @output << "<DIV CLASS=\"text\" STYLE=\"min-height: #{@float_height}px\">"
-    if float
-      float.call( parents, self)
-    end
+  def text( parents, lines)
+    @output << "<DIV CLASS=\"text\">"
 
     lines.each do |line|
       if line.strip == ''
@@ -346,7 +343,6 @@ class HTML
       end
     end
     @output << "</DIV>"
-    @float_height = 10
   end
 
   def write( line)
