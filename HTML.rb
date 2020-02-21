@@ -2,13 +2,16 @@ require 'erb'
 require 'yaml'
 
 class HTML
+  attr_reader :floats
   @@links = {}
 
   def initialize( sink, path, links, templates)
     @path         = path
     @output       = []
+    @css          = []
     @error        = nil
     @float_height = 10
+    @floats       = 0
     @sink         = sink
     @templates    = templates
     @n_anchors    = 0
@@ -18,6 +21,12 @@ class HTML
         @@links[k] = v
       end
     end
+  end
+
+  def add_float( img, w, h, float)
+    write_css( ".f#{float} {")
+    write_css( "  background-image: url(\"#{relative_path( @path, img)}\");")
+    write_css( '}')
   end
 
   def add_index( img, w, h, target, alt_text)
@@ -90,6 +99,10 @@ class HTML
     @output << "<DIV CLASS=\"date\">" + format_date( time) + "</DIV>"
   end
 
+  def disable_float( float)
+    write_css( ".f#{float} {display: none}")
+  end
+
   def dump
     p [@path, @output.size]
   end
@@ -148,18 +161,28 @@ class HTML
   end
 
   def finish
-      Dir.mkdir( File.dirname( @path)) if not File.exists?( File.dirname( @path))
+
+    # Embed CSS into the HTML lines
+    to_write = []
+    @output.each do |line|
+      to_write << line
+      if /^<style>/ =~ line
+        @css.each {|css| to_write << css}
+      end
+    end
+
+    Dir.mkdir( File.dirname( @path)) if not File.exists?( File.dirname( @path))
     rewrite = ! File.exists?( @path)
 
     if ! rewrite
       current = IO.readlines( @path).collect {|line| line.chomp}
-      rewrite = (current.join("\n").strip != @output.join("\n").strip)
+      rewrite = (current.join("\n").strip != to_write.join("\n").strip)
     end
 
     if rewrite
       puts "... Writing #{@path}"
       File.open( @path, "w") do |f|
-        f.puts @output.join( "\n")
+        f.puts to_write.join( "\n")
       end
     end
 
@@ -168,20 +191,20 @@ class HTML
     end
   end
 
-    def format_date( date)
-        ord = if (date.day > 3) and (date.day < 21)
-            "th"
-        elsif (date.day % 10) == 1
-            "st"
-        elsif (date.day % 10) == 2
-            "nd"
-        elsif (date.day % 10) == 3
-            "rd"
-        else
-            "th"
-        end
-        date.strftime( "%A, ") + date.day.to_s + ord + date.strftime( " %B %Y")
+  def format_date( date)
+    ord = if (date.day > 3) and (date.day < 21)
+        "th"
+    elsif (date.day % 10) == 1
+        "st"
+    elsif (date.day % 10) == 2
+        "nd"
+    elsif (date.day % 10) == 3
+        "rd"
+    else
+        "th"
     end
+    date.strftime( "%A, ") + date.day.to_s + ord + date.strftime( " %B %Y")
+  end
 
   def heading( text)
     @output << '<div class="heading">'
@@ -199,6 +222,11 @@ class HTML
     rp = relative_path( @path, file)
     @output << "<IMG #{inject}SRC=\"#{rp}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" ALT=\"#{alt_text}\">"
     @float_height = h if float
+  end
+
+  def insert_float
+    @output << "<A HREF=\"pictures.html\"><DIV CLASS=\"float f#{@floats}\"></DIV></A>"
+    @floats += 1
   end
 
   def link( defn)
@@ -333,13 +361,21 @@ class HTML
   end
 
   def text( parents, lines)
+    written, float = 0, true
     @output << "<DIV CLASS=\"text\">"
 
     lines.each do |line|
       if line.strip == ''
         @output << '<BR><BR>'
+        written += 50
+        if written > 300
+          written, float = 0, true
+        end
       else
+        insert_float if float
+        float = false
         write( line)
+        written += line.size
       end
     end
     @output << "</DIV>"
@@ -355,6 +391,10 @@ class HTML
     end
     @output << check( line)
 #		@output << check(text)
+  end
+
+  def write_css( line)
+    @css << line
   end
 end
 

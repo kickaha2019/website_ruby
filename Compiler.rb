@@ -52,27 +52,16 @@ class Compiler
   end
 
   # Initialisation
-  def initialize( source, sink, cache_file, debug_pages=nil)
+  def initialize( source, sink, debug_pages=nil)
     @errors = 0
     @source = source
     @sink = sink
     @debug_pages = debug_pages.nil? ? nil : Regexp.new( debug_pages)
-    @cache_file=cache_file
-    @old_cache={}
-    @new_cache={}
     @special_chars = {}
     @commands = Commands.new
     @templates = {}
     @links = YAML.load( File.open( source + "/links.yaml"))
-
-    # Load the old cache
-    if @cache_file
-      begin
-        @old_cache = YAML.load( File.open( cache_file))
-      rescue
-        puts "*** Unable to load cache"
-      end
-    end
+    @dimensions = YAML.load( File.open( source + "/dimensions.yaml"))
   end
 
 # =================================================================
@@ -110,8 +99,6 @@ class Compiler
       error( name, nil, "Anchor not used") unless info[:used]
     end
 
-    # Save the cache
-    save_cache
     puts "*** #{@errors} Errors in compilation" if @errors > 0
   end
 
@@ -169,7 +156,7 @@ class Compiler
     Dir.entries( @source+path).each do |file|
       path1 = path + "/" + file
       if m = /^(.*)\.yaml$/.match( file)
-        if file != 'links.yaml'
+        if (file != 'links.yaml') && (file != 'dimensions.yaml')
           File.open( @source + path + '/' + m[1] + '.txt', 'w') do |io|
             begin
               defn = YAML.load( IO.read( @source + path1))
@@ -253,16 +240,16 @@ class Compiler
     end
 
     # Delete any sink files not regenerated
-    (sink - generated).each do |file|
-      path1 = @sink + path + "/" + file
-      next if cached_file?( path1)
-      #p ['DEBUG100', path1]
-      if File.directory?( path1)
-        FileUtils.remove_dir( path1)
-      else
-        FileUtils.remove_file( path1)
-      end
-    end
+    # (sink - generated).each do |file|
+    #   path1 = @sink + path + "/" + file
+    #   next if cached_file?( path1)
+    #   #p ['DEBUG100', path1]
+    #   if File.directory?( path1)
+    #     FileUtils.remove_dir( path1)
+    #   else
+    #     FileUtils.remove_file( path1)
+    #   end
+    # end
 
     dir_article
   end
@@ -428,34 +415,10 @@ class Compiler
 # Helper methods
 # =================================================================
 
-  def append_cache( key, info)
-    if @cache_file
-      File.open( @cache_file, "a") do |f|
-        f.puts '"' + key.gsub("\t", '\\t') + '":'
-        info.each_pair do |k,v|
-          v = '"' + v + '"' if v.is_a?( String) && (not /^\d*$/ =~ v)
-          f.puts "  :#{k}: #{v}"
-        end
-      end
-    end
-  end
-
   def begins( text, header)
     return nil if text.size < header.size
     return nil if text[0...header.size] != header
     text[ header.size..-1]
-  end
-
-  def cached_file?( path)
-    @old_cache.each_value do |info|
-      return true if info[:sink_filename] == path
-    end
-
-    @new_cache.each_value do |info|
-      return true if info[:sink_filename] == path
-    end
-
-    false
   end
 
   def error( path, lineno, msg)
@@ -581,12 +544,6 @@ class Compiler
     @source + '/' + file
   end
 
-  def save_cache
-    if @cache_file
-      File.open( @cache_file, "w") {|f| f.write( @new_cache.to_yaml)}
-    end
-  end
-
   def sink( path)
     @sink + path
   end
@@ -642,6 +599,10 @@ class Compiler
   end
 
   def fileinfo( filename)
-    @source + '/fileinfo/' + filename.gsub('/','.')
+    @source + '/fileinfo/' + filename.gsub('/','_')
+  end
+
+  def dimensions( key)
+    @dimensions[key]
   end
 end

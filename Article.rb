@@ -26,7 +26,7 @@ class Article
       html.breadcrumbs( parents, title) if parents.size > 0
       html.start_div( 'payload content')
 
-      index( parents, html, 0)
+      index( parents, html)
 
       if @content.size > 1
         html.start_div( 'story t1')
@@ -140,9 +140,10 @@ class Article
     end
 
     unless info
-      info = [ts, * get_image_dims( lineno, image_filename)]
+      dims = get_image_dims( lineno, image_filename)
+      info = [ts, dims[:width], dims[:height]]
       File.open( fileinfo, 'w') do |io|
-        io.puts info.collect {|i| i.to_s}.join( "\n")
+        io.puts info.collect {|i| i.to_s}.join("\n")
       end
 
       to_delete = []
@@ -204,9 +205,6 @@ class Article
         if m = /pixelWidth: (\d*)$/.match( line.chomp)
           w = m[1].to_i
         end
-        if m = /pixelWidth: (\d*)$/.match( line.chomp)
-          w = m[1].to_i
-        end
       end
 
       if w and h
@@ -228,7 +226,7 @@ class Article
 
   def icon
     return @icon if @icon
-
+    return nil unless index_images?
     return @images[0] if @images.size > 0
 
     children.each do |child|
@@ -240,11 +238,11 @@ class Article
     nil
   end
 
-  def index( parents, html, lineno)
+  def index( parents, html)
     html.start_indexes
 
     if index_images?
-      index_using_images( parents, html, lineno)
+      index_using_images( parents, html)
       text_size_classes = 'size0'
     else
       text_size_classes = 'size0 size1 size2 size3'
@@ -273,27 +271,27 @@ class Article
     [get( 'INDEX_WIDTH').to_i, get( 'INDEX_HEIGHT').to_i]
   end
 
-  def index_resource( lineno, html, dir, page, image = nil)
+  def index_resource( html, dir, page, image = nil)
     if image.nil?
       image = @compiler.sink( "/resources/#{dir}_cyan.png")
     else
-      image = prepare_thumbnail( lineno, image, * index_image_dimensions)
+      image = prepare_thumbnail( image, * @compiler.dimensions( 'icon'))
     end
 
     html.add_index( image,
-                    * index_image_dimensions,
+                    * @compiler.dimensions( 'icon'),
                     page.sink_filename,
                     prettify( page.title))
   end
 
-  def index_using_images( parents, html, lineno)
+  def index_using_images( parents, html)
     if index_children? && (@children.size > 0)
       children.each do |child|
-        index_resource( lineno, html, 'down', child, child.icon)
+        index_resource( html, 'down', child, child.icon)
       end
     else
       siblings( parents).select {|a| a.has_content?}.each do |sibling|
-        index_resource( lineno, html, 'down', sibling, sibling.icon) unless sibling == self
+        index_resource( html, 'down', sibling, sibling.icon) unless sibling == self
       end
     end
 
@@ -391,7 +389,7 @@ class Article
     info[:sink_filename]
   end
 
-  def prepare_thumbnail( lineno, info, width, height)
+  def prepare_thumbnail( info, width, height)
     w,h = shave_thumbnail( width, height, info[:width], info[:height])
     file = info[:image]
     thumbfile = @compiler.sink_filename( file[0..-5] + "-#{width}-#{height}" + file[-4..-1])
@@ -476,6 +474,16 @@ class Article
       else
         item.call( parents, html)
       end
+    end
+
+    @images.each_index do |i|
+      next if i >= html.floats
+      image = prepare_thumbnail( @images[i], * index_image_dimensions)
+      html.add_float( image, * index_image_dimensions, i)
+    end
+
+    (images.size...html.floats.size).each do |i|
+      html.disable_float( i)
     end
 
     if @content.size > 1
