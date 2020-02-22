@@ -65,13 +65,16 @@ class HTML
     @output << "<a name=\"#{@n_anchors}\"></a>"
   end
 
-  def breadcrumbs( parents, title)
+  def breadcrumbs( parents, title, pictures_link)
     @output << "<DIV CLASS=\"breadcrumbs t0 content\">"
     parents.each do |parent|
       rp = relative_path( @path, parent.sink_filename)
       @output << "<A HREF=\"#{rp}\">#{HTML.prettify( parent.title)}</A> &raquo; "
     end
     @output << '<SPAN>' + check( HTML.prettify(title)) + '</SPAN>'
+    if pictures_link
+      @output << " &raquo; <A HREF=\"#{picture_rp}\">Pictures</A>"
+    end
     @output << "</DIV>"
   end
 
@@ -228,8 +231,7 @@ class HTML
 
   def insert_float
     return if @floats >= @max_floats
-    m = /^(.*)\./.match( @path.split('/')[-1])
-    @output << "<A CLASS=\"float\" HREF=\"#{m[1]}_pictures.html\"><DIV CLASS=\"float f#{@floats}\"></DIV></A>"
+    @output << "<A CLASS=\"float\" HREF=\"#{picture_rp}\"><DIV CLASS=\"float f#{@floats}\"></DIV></A>"
     @floats += 1
   end
 
@@ -263,13 +265,6 @@ class HTML
     end
   end
 
-  def link_pictures( text_classes)
-    @output << "<DIV CLASS=\"index_text t0 #{text_classes}\">"
-    m = /^(.*)\./.match( @path.split('/')[-1])
-    @output << " &raquo; <A HREF=\"#{m[1]}_pictures.html\">Pictures</A>"
-    @output << "</DIV>"
-  end
-
   def nbsp
     @output << '&nbsp;'
   end
@@ -280,6 +275,11 @@ class HTML
       @output << line
     end
     @output << "?>"
+  end
+
+  def picture_rp
+    m = /^(.*)\./.match( @path.split('/')[-1])
+    m[1] + '_pictures.html'
   end
 
   def self.prettify( name)

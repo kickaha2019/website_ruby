@@ -23,14 +23,25 @@ class Article
     @php = false
 
     add_content do |parents, html|
-      html.set_max_floats( @images.size)
-      html.breadcrumbs( parents, title) if parents.size > 0
+      if @images.size > 2
+        html.set_max_floats( @images.size)
+        html.breadcrumbs( parents, title, true)
+      else
+        html.breadcrumbs( parents, title, false) if parents.size > 0
+      end
       html.start_div( 'payload content')
 
       index( parents, html, @images.size > 1)
 
       if @content.size > 1
         html.start_div( 'story t1')
+      end
+
+      if @images.size == 1
+        html.start_div( 'gallery t1')
+        file, w, h = prepare_source_image( @images[0], * @compiler.dimensions( 'image'))
+        html.image( file, w, h, 'size0 size1 size2 size3')
+        html.end_div
       end
     end
 
@@ -256,7 +267,6 @@ class Article
       text_size_classes = 'size0 size1 size2 size3'
     end
 
-    html.link_pictures( 'size0') if pictures
     html.children( to_index, text_size_classes)
 
     html.end_indexes
@@ -462,7 +472,7 @@ class Article
     html.start_page( get("TITLE"))
 
     if (@content.size < 2) && (@images.size > 0)
-      html.breadcrumbs( parents, title)
+      html.breadcrumbs( parents, title, false)
       to_pictures( parents, html)
       return
     end

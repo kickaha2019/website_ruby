@@ -388,7 +388,7 @@ class Compiler
       html = HTML.new( @sink, sink_filename( filename), @links, @templates)
       html.start
       html.start_page( article.get("TITLE"))
-      html.breadcrumbs( parents + [article], 'Pictures')
+      html.breadcrumbs( parents + [article], 'Pictures', false)
       article.to_pictures( parents, html)
       html.finish do |error|
         article.error( 0, error)
