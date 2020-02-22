@@ -23,10 +23,11 @@ class Article
     @php = false
 
     add_content do |parents, html|
+      html.set_max_floats( @images.size)
       html.breadcrumbs( parents, title) if parents.size > 0
       html.start_div( 'payload content')
 
-      index( parents, html)
+      index( parents, html, @images.size > 1)
 
       if @content.size > 1
         html.start_div( 'story t1')
@@ -238,7 +239,7 @@ class Article
     nil
   end
 
-  def index( parents, html)
+  def index( parents, html, pictures)
     html.start_indexes
 
     if index_images?
@@ -248,7 +249,7 @@ class Article
       text_size_classes = 'size0 size1 size2 size3'
     end
 
-
+    html.link_pictures( 'size0') if pictures
     if index_children? && (@children.size > 0)
       to_index = children
     else
@@ -265,10 +266,6 @@ class Article
 
   def index_images?
     get( 'INDEX') == 'image'
-  end
-
-  def index_image_dimensions
-    [get( 'INDEX_WIDTH').to_i, get( 'INDEX_HEIGHT').to_i]
   end
 
   def index_resource( html, dir, page, image = nil)
@@ -346,47 +343,23 @@ class Article
     #"<IMG #{inject}SRC=\"#{rp}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" ALT=\"#{alt_text}\">"
   end
 
-  def prepare_source_image( lineno, file)
-    key, info = @compiler.get_cache( file) do |filename|
-      get_image_dims( lineno, filename)
-    end
+  def prepare_source_image( info, width, height)
+    w,h = constrain_dims( width, height, info[:width], info[:height])
+    file = info[:image]
+    imagefile = @compiler.sink_filename( file[0..-5] + "-#{width}-#{height}" + file[-4..-1])
 
-    return nil if not info
+    if not File.exists?( imagefile)
+      create_directory( imagefile)
 
-    w,h = constrain_dims( get("IMAGE_MAX_WIDTH").to_i, get("IMAGE_MAX_HEIGHT").to_i,
-                          info[:width], info[:height])
-    if info[:sink_filename]   != @compiler.sink_filename( file)         or
-        not File.exists?( info[:sink_filename])                         or
-        info[:sink_timestamp] != File.mtime( info[:sink_filename]).to_i or
-        info[:sink_width]     != w                                      or
-        info[:sink_height]    != h
-
-      #p [file, info]
-      #raise "Re-scaling"
-      #if File.exists?( info[:sink_filename])
-      #	p info # DEBUG CODE
-      #	p [sink_filename( file), File.mtime( info[:sink_filename]), w, h]
-      #	raise file # DEBUG CODE
-      #else
-      #	puts "***** Missing " + info[:sink_filename]
-      #end
-
-      create_directory( sf = @compiler.sink_filename( file))
       if w < info[:width] or h < info[:height]
-        cmd = ["scripts/scale.csh", file, sf, w.to_s, h.to_s]
+        cmd = ["scripts/scale.csh", file, imagefile, w.to_s, h.to_s]
         raise "Error scaling [#{file}]" if not system( cmd.join( " "))
       else
-        FileUtils.cp( file, sf)
+        FileUtils.cp( file, imagefile)
       end
-
-      info[:sink_filename]  = @compiler.sink_filename( file)
-      info[:sink_timestamp] = File.mtime( info[:sink_filename]).to_i
-        info[:sink_width]     = w
-        info[:sink_height]    = h
-      @compiler.append_cache( key, info)
     end
 
-    info[:sink_filename]
+    return imagefile, w, h
   end
 
   def prepare_thumbnail( info, width, height)
@@ -465,6 +438,26 @@ class Article
     @title ? @title : "Home"
   end
 
+  def to_pictures( parents, html)
+    html.start_page( get("TITLE"))
+    html.breadcrumbs( parents, title) if parents.size > 0
+    html.start_div( 'payload content')
+    index( parents, html, false)
+    html.write_css( '@media all and (max-width: 767px) {')
+    html.write_css( '  .indexes {display: none}')
+    html.write_css( '}')
+    html.start_div( 'gallery t1')
+
+    @images.each do |image|
+      file, w, h = prepare_source_image( image, * @compiler.dimensions( 'image'))
+      html.image( file, w, h, 'size0 size1 size2 size3')
+      html.add_caption( image[:caption])
+    end
+
+    html.end_div
+    html.end_page
+  end
+
   def to_html( parents, html)
     html.start_page( get("TITLE"))
 
@@ -478,12 +471,8 @@ class Article
 
     @images.each_index do |i|
       next if i >= html.floats
-      image = prepare_thumbnail( @images[i], * index_image_dimensions)
-      html.add_float( image, * index_image_dimensions, i)
-    end
-
-    (images.size...html.floats.size).each do |i|
-      html.disable_float( i)
+      image = prepare_thumbnail( @images[i], * @compiler.dimensions( 'icon'))
+      html.add_float( image, * @compiler.dimensions( 'icon'), i)
     end
 
     if @content.size > 1
@@ -501,5 +490,9 @@ class Article
     if ! @compiler.is_anchor_defined?(link)
       error( lineno, "Unknown anchor link: #{link}")
     end
+  end
+
+  def picture_filename
+    source_filename[0..-5] + '_pictures.html'
   end
 end

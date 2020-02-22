@@ -373,11 +373,24 @@ class Compiler
 
   def regenerate( parents, article)
     debug_hook( article)
-    html = HTML.new( @sink, sink_filename( article.sink_filename), @links, @templates)
-    html.start
-    article.to_html( parents, html)
-    html.finish do |error|
-      article.error( 0, error)
+
+    if article.has_content? || (article.images.size < 2)
+      html = HTML.new( @sink, sink_filename( article.sink_filename), @links, @templates)
+      html.start
+      article.to_html( parents, html)
+      html.finish do |error|
+        article.error( 0, error)
+      end
+    end
+
+    if article.images.size >= 2
+      filename = article.has_content? ? article.picture_filename : article.sink_filename
+      html = HTML.new( @sink, sink_filename( filename), @links, @templates)
+      html.start
+      article.to_pictures( parents, html)
+      html.finish do |error|
+        article.error( 0, error)
+      end
     end
 
     article.children.each do |child|

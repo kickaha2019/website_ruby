@@ -14,7 +14,7 @@ class LinkChecker
 	LAST_CHECKED='/Users/peter/Website/data/last_checked.yaml'
 	TABLES={'dramas'=>['name','url'],
 			'films'=>['name','url']}
-	MAX_ERRS = 5
+	MAX_ERRS = 50
 	
 	def initialize
 		@links = Hash.new {|h,k| h[k] = []}

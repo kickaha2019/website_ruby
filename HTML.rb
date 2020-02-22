@@ -15,6 +15,7 @@ class HTML
     @sink         = sink
     @templates    = templates
     @n_anchors    = 0
+    @max_floats   = 0
 
     if @@links.size == 0
       links.each_pair do |k,v|
@@ -29,10 +30,16 @@ class HTML
     write_css( '}')
   end
 
+  def add_caption( caption)
+    @output << '<DIV>'
+    write( caption)
+    @output << '</DIV>'
+  end
+
   def add_index( img, w, h, target, alt_text)
     @output << "<A CLASS=\"index t0 size1 size2 size3\" HREF=\"#{relative_path( @path, target)}\">"
     start_div
-    image( img, w, h, alt_text, false)
+    image( img, w, h, alt_text)
     end_div
     start_div
     write( alt_text)
@@ -218,14 +225,15 @@ class HTML
     end
   end
 
-  def image( file, w, h, alt_text, float, inject='')
+  def image( file, w, h, inject='')
     rp = relative_path( @path, file)
-    @output << "<IMG #{inject}SRC=\"#{rp}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" ALT=\"#{alt_text}\">"
-    @float_height = h if float
+    @output << "<IMG CLASS=\"#{inject}\" SRC=\"#{rp}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\">"
   end
 
   def insert_float
-    @output << "<A HREF=\"pictures.html\"><DIV CLASS=\"float f#{@floats}\"></DIV></A>"
+    return if @floats >= @max_floats
+    m = /^(.*)\./.match( @path.split('/')[-1])
+    @output << "<A CLASS=\"float\" HREF=\"#{m[1]}_pictures.html\"><DIV CLASS=\"float f#{@floats}\"></DIV></A>"
     @floats += 1
   end
 
@@ -257,6 +265,13 @@ class HTML
     else
       "<A HREF=\"#{ref}\">#{check(text)}</A>"
     end
+  end
+
+  def link_pictures( text_classes)
+    @output << "<DIV CLASS=\"index_text t0 #{text_classes}\">"
+    m = /^(.*)\./.match( @path.split('/')[-1])
+    @output << " &raquo; <A HREF=\"#{m[1]}_pictures.html\">Pictures</A>"
+    @output << "</DIV>"
   end
 
   def nbsp
@@ -300,6 +315,10 @@ class HTML
     (rp == '') ? '.' : rp
   end
 
+  def set_max_floats( n)
+    @max_floats = n
+  end
+
   def start
   end
 
@@ -327,8 +346,8 @@ class HTML
     @output << "<div class=\"grid\">"
   end
 
-  def start_index
-    @output << "<div class=\"index\">"
+  def start_index( index_classes)
+    @output << "<div class=\"index #{index_classes}\">"
   end
 
   def start_indexes
