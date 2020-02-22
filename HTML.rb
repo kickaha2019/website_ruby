@@ -11,7 +11,7 @@ class HTML
     @css          = []
     @error        = nil
     @float_height = 10
-    @floats       = 0
+    @floats       = []
     @sink         = sink
     @templates    = templates
     @n_anchors    = 0
@@ -24,10 +24,9 @@ class HTML
     end
   end
 
-  def add_float( img, w, h, float)
-    write_css( ".f#{float} {")
-    write_css( "  background-image: url(\"#{relative_path( @path, img)}\");")
-    write_css( '}')
+  def add_float( img, w, h, classes, float)
+    rp = relative_path( @path, img)
+    @output[@floats[float]] += "\n<IMG CLASS=\"#{classes}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" SRC=\"#{rp}\">"
   end
 
   def add_caption( caption)
@@ -36,8 +35,8 @@ class HTML
     @output << '</DIV>'
   end
 
-  def add_index( img, w, h, target, alt_text)
-    @output << "<A CLASS=\"index t0 size1 size2 size3\" HREF=\"#{relative_path( @path, target)}\">"
+  def add_index( img, w, h, sizes, target, alt_text)
+    @output << "<A CLASS=\"index t0 #{sizes}\" HREF=\"#{relative_path( @path, target)}\">"
     start_div
     image( img, w, h, alt_text)
     end_div
@@ -87,9 +86,9 @@ class HTML
     text
   end
 
-  def children( articles, classes)
+  def children( articles)
     articles.each do |article|
-      @output << "<DIV CLASS=\"index_text t0 #{classes}\">"
+      @output << "<DIV CLASS=\"index_text t0\">"
       rp = relative_path( @path, article.sink_filename)
       @output << " &raquo; <A HREF=\"#{rp}\">#{HTML.prettify( article.title)}</A>"
       @output << "</DIV>"
@@ -230,9 +229,10 @@ class HTML
   end
 
   def insert_float
-    return if @floats >= @max_floats
-    @output << "<A CLASS=\"float\" HREF=\"#{picture_rp}\"><DIV CLASS=\"float f#{@floats}\"></DIV></A>"
-    @floats += 1
+    return if @floats.size >= @max_floats
+    @floats << @output.size
+    @output << "<A CLASS=\"#{((@floats.size % 2) == 0) ? 'left' : 'right'}\" HREF=\"#{picture_rp}\">"
+    @output << '</A>'
   end
 
   def link( defn)

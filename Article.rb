@@ -38,9 +38,11 @@ class Article
       end
 
       if @images.size == 1
+        html.write_css( '@media all and (max-width: 1279px) {')
+        html.write_css( '  .indexes {display: none}')
+        html.write_css( '}')
         html.start_div( 'gallery t1')
-        file, w, h = prepare_source_image( @images[0], * @compiler.dimensions( 'image'))
-        html.image( file, w, h, 'size0 size1 size2 size3')
+        prepare_source_images( html, @images[0])
         html.end_div
       end
     end
@@ -262,12 +264,9 @@ class Article
 
     if index_images?
       index_using_images( parents, html)
-      text_size_classes = 'size0'
     else
-      text_size_classes = 'size0 size1 size2 size3'
+      html.children( to_index)
     end
-
-    html.children( to_index, text_size_classes)
 
     html.end_indexes
   end
@@ -280,27 +279,24 @@ class Article
     get( 'INDEX') == 'image'
   end
 
-  def index_resource( html, dir, page, image = nil)
-    if image.nil?
-      image = @compiler.sink( "/resources/#{dir}_cyan.png")
-    else
-      image = prepare_thumbnail( image, * @compiler.dimensions( 'icon'))
+  def index_resource( html, page, image = nil)
+    prepare_thumbnails( image) do |file, dims, sizes|
+      html.add_index( file,
+                      * dims,
+                      sizes,
+                      page.sink_filename,
+                      prettify( page.title))
     end
-
-    html.add_index( image,
-                    * @compiler.dimensions( 'icon'),
-                    page.sink_filename,
-                    prettify( page.title))
   end
 
   def index_using_images( parents, html)
     if index_children? && (@children.size > 0)
       children.each do |child|
-        index_resource( html, 'down', child, child.icon)
+        index_resource( html, child, child.icon)
       end
     else
       siblings( parents).select {|a| a.has_content?}.each do |sibling|
-        index_resource( html, 'down', sibling, sibling.icon) unless sibling == self
+        index_resource( html, sibling, sibling.icon) unless sibling == self
       end
     end
 
@@ -374,6 +370,19 @@ class Article
     return imagefile, w, h
   end
 
+  def prepare_source_images( html, image)
+    dims = @compiler.dimensions( 'image')
+    sizes = ''
+    (0...dims.size).each do |i|
+      sizes = sizes + " size#{i}"
+      if ((i+1) >= dims.size) || (dims[i][0] != dims[i+1][0]) || (dims[i][1] != dims[i+1][1])
+        file, w, h = prepare_source_image( image, * dims[i])
+        html.image( file, w, h, sizes)
+        sizes = ''
+      end
+    end
+  end
+
   def prepare_thumbnail( info, width, height)
     w,h = shave_thumbnail( width, height, info[:width], info[:height])
     file = info[:image]
@@ -388,6 +397,20 @@ class Article
     end
 
     thumbfile
+  end
+
+  def prepare_thumbnails( info)
+    dims = @compiler.dimensions( 'icon')
+    backstop = @compiler.sink( "/resources/down_cyan.png")
+    sizes = ''
+    (0...dims.size).each do |i|
+      sizes = sizes + " size#{i}"
+      if ((i+1) >= dims.size) || (dims[i][0] != dims[i+1][0]) || (dims[i][1] != dims[i+1][1])
+        file = info ? prepare_thumbnail( info, * dims[i]) : backstop
+        yield file, dims[i], sizes
+        sizes = ''
+      end
+    end
   end
 
   def prettify( name)
@@ -453,14 +476,13 @@ class Article
   def to_pictures( parents, html)
     html.start_div( 'payload content')
     index( parents, html, false)
-    html.write_css( '@media all and (max-width: 767px) {')
+    html.write_css( '@media all and (max-width: 1279px) {')
     html.write_css( '  .indexes {display: none}')
     html.write_css( '}')
     html.start_div( 'gallery t1')
 
     @images.each do |image|
-      file, w, h = prepare_source_image( image, * @compiler.dimensions( 'image'))
-      html.image( file, w, h, 'size0 size1 size2 size3')
+      prepare_source_images( html, image)
       html.add_caption( image[:caption])
     end
 
@@ -486,9 +508,10 @@ class Article
     end
 
     @images.each_index do |i|
-      next if i >= html.floats
-      image = prepare_thumbnail( @images[i], * @compiler.dimensions( 'icon'))
-      html.add_float( image, * @compiler.dimensions( 'icon'), i)
+      next if i >= html.floats.size
+      prepare_thumbnails( @images[i]) do |image, dims, sizes|
+        html.add_float( image, * dims, sizes, i)
+      end
     end
 
     if @content.size > 1
