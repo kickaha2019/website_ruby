@@ -62,6 +62,7 @@ class Compiler
     @templates = {}
     @links = YAML.load( File.open( source + "/links.yaml"))
     @dimensions = YAML.load( File.open( source + "/dimensions.yaml"))
+    @generated = {}
   end
 
 # =================================================================
@@ -93,6 +94,9 @@ class Compiler
 
     # Regenerate the HTML files
     regenerate( [], root_article)
+
+    # Delete files not regenerated
+    tidy_up( @sink)
 
     # Check anchors all used
     @anchors.each_pair do |name, info|
@@ -375,7 +379,7 @@ class Compiler
     debug_hook( article)
 
     if article.has_content? || (article.images.size < 2)
-      html = HTML.new( @sink, sink_filename( article.sink_filename), @links, @templates)
+      html = HTML.new( @sink, record( sink_filename( article.sink_filename)), @links, @templates)
       html.start
       article.to_html( parents, html)
       html.finish do |error|
@@ -385,7 +389,7 @@ class Compiler
 
     if article.images.size >= 2
       filename = article.has_content? ? article.picture_filename : article.sink_filename
-      html = HTML.new( @sink, sink_filename( filename), @links, @templates)
+      html = HTML.new( @sink, record( sink_filename( filename)), @links, @templates)
       html.start
       html.start_page( article.get("TITLE"))
       html.breadcrumbs( parents + [article], 'Pictures', false)
@@ -620,4 +624,35 @@ class Compiler
   def dimensions( key)
     @dimensions[key]
   end
+
+  def tidy_up( path)
+    return true if @sink + '/resources' == path
+    keep = false
+    Dir.entries( path).each do |f|
+      next if /^\./ =~ f
+      path1 = path + '/' + f
+      if File.directory?( path1)
+        if tidy_up( path1)
+          keep = true
+        else
+          puts "... Deleting #{path1}"
+          Dir.rmdir( path1)
+        end
+      else
+        if @generated[path1]
+          keep = true
+        else
+          puts "... Deleting #{path1}"
+          File.delete( path1)
+        end
+      end
+    end
+    keep
+  end
+
+  def record( path)
+    @generated[path] = true
+    path
+  end
 end
+

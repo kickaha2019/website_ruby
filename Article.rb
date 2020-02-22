@@ -355,6 +355,7 @@ class Article
     w,h = constrain_dims( width, height, info[:width], info[:height])
     file = info[:image]
     imagefile = @compiler.sink_filename( file[0..-5] + "-#{width}-#{height}" + file[-4..-1])
+    @compiler.record( imagefile)
 
     if not File.exists?( imagefile)
       create_directory( imagefile)
@@ -387,6 +388,7 @@ class Article
     w,h = shave_thumbnail( width, height, info[:width], info[:height])
     file = info[:image]
     thumbfile = @compiler.sink_filename( file[0..-5] + "-#{width}-#{height}" + file[-4..-1])
+    @compiler.record( thumbfile)
 
     if not File.exists?( thumbfile)
       cmd = ["scripts/thumbnail.csh"]
