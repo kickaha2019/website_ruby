@@ -387,6 +387,8 @@ class Compiler
       filename = article.has_content? ? article.picture_filename : article.sink_filename
       html = HTML.new( @sink, sink_filename( filename), @links, @templates)
       html.start
+      html.start_page( article.get("TITLE"))
+      html.breadcrumbs( parents + [article], 'Pictures')
       article.to_pictures( parents, html)
       html.finish do |error|
         article.error( 0, error)

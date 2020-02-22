@@ -240,6 +240,13 @@ class Article
   end
 
   def index( parents, html, pictures)
+    if index_children? && (@children.size > 0)
+      to_index = children
+    else
+      to_index = siblings( parents).select {|a| a.has_content? && (a != self)}
+    end
+    return if to_index.size == 0
+
     html.start_indexes
 
     if index_images?
@@ -250,11 +257,6 @@ class Article
     end
 
     html.link_pictures( 'size0') if pictures
-    if index_children? && (@children.size > 0)
-      to_index = children
-    else
-      to_index = siblings( parents).select {|a| a.has_content? && (a != self)}
-    end
     html.children( to_index, text_size_classes)
 
     html.end_indexes
@@ -439,8 +441,6 @@ class Article
   end
 
   def to_pictures( parents, html)
-    html.start_page( get("TITLE"))
-    html.breadcrumbs( parents, title) if parents.size > 0
     html.start_div( 'payload content')
     index( parents, html, false)
     html.write_css( '@media all and (max-width: 767px) {')
@@ -460,6 +460,12 @@ class Article
 
   def to_html( parents, html)
     html.start_page( get("TITLE"))
+
+    if (@content.size < 2) && (@images.size > 0)
+      html.breadcrumbs( parents, title)
+      to_pictures( parents, html)
+      return
+    end
 
     @content.each do |item|
       if item.is_a?( Array)

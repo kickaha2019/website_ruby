@@ -145,10 +145,6 @@ class HTML
     @output << "</div>"
   end
 
-  def end_lightbox
-    @output << "</a>"
-  end
-
   def end_page
     @templates['footer'].each do |line|
       @output << line
@@ -352,12 +348,6 @@ class HTML
 
   def start_indexes
     @output << "<div class=\"indexes t0\">"
-  end
-
-  def start_lightbox( file, title, gallery_index=nil)
-    rp = relative_path( @path, file)
-    rel = gallery_index ? "[g#{gallery_index}]" : ''
-    @output << "<A HREF=\"#{rp}\" REL=\"lightbox#{rel}\" TITLE=\"#{title}\">"
   end
 
   def start_page( title)
