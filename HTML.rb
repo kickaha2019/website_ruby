@@ -24,9 +24,9 @@ class HTML
     end
   end
 
-  def add_float( img, w, h, classes, float)
+  def add_float( img, w, h, classes, caption, float)
     rp = relative_path( @path, img)
-    @output[@floats[float]] += "\n<IMG CLASS=\"#{classes}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" SRC=\"#{rp}\">"
+    @output[@floats[float]] += "\n<IMG CLASS=\"#{classes}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" SRC=\"#{rp}\" ALT=\"#{caption}\">"
   end
 
   def add_caption( caption)
@@ -223,9 +223,10 @@ class HTML
     end
   end
 
-  def image( file, w, h, inject='')
+  def image( file, w, h, alt_text, inject='')
+    alt_text = 'TTBA' unless alt_text
     rp = relative_path( @path, file)
-    @output << "<IMG CLASS=\"#{inject}\" SRC=\"#{rp}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\">"
+    @output << "<IMG CLASS=\"#{inject}\" SRC=\"#{rp}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" ALT=\"#{alt_text}\">"
   end
 
   def insert_float

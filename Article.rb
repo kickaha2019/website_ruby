@@ -280,9 +280,10 @@ class Article
   end
 
   def index_resource( html, page, image = nil)
-    prepare_thumbnails( image) do |file, dims, sizes|
+    dims = @compiler.dimensions( 'icon')
+    prepare_images(image, dims, :prepare_thumbnail) do |file, w, h, sizes|
       html.add_index( file,
-                      * dims,
+                      w, h,
                       sizes,
                       page.sink_filename,
                       prettify( page.title))
@@ -373,14 +374,8 @@ class Article
 
   def prepare_source_images( html, image)
     dims = @compiler.dimensions( 'image')
-    sizes = ''
-    (0...dims.size).each do |i|
-      sizes = sizes + " size#{i}"
-      if ((i+1) >= dims.size) || (dims[i][0] != dims[i+1][0]) || (dims[i][1] != dims[i+1][1])
-        file, w, h = prepare_source_image( image, * dims[i])
-        html.image( file, w, h, sizes)
-        sizes = ''
-      end
+    prepare_images( image, dims, :prepare_source_image) do |file, w, h, sizes|
+      html.image( file, w, h, image[:caption], sizes)
     end
   end
 
@@ -398,18 +393,21 @@ class Article
       raise "Error scaling [#{info[:image]}]" if not system( cmd.join( " "))
     end
 
-    thumbfile
+    return thumbfile, width, height
   end
 
-  def prepare_thumbnails( info)
-    dims = @compiler.dimensions( 'icon')
+  def prepare_images( info, dims, prepare)
     backstop = @compiler.sink( "/resources/down_cyan.png")
     sizes = ''
     (0...dims.size).each do |i|
       sizes = sizes + " size#{i}"
       if ((i+1) >= dims.size) || (dims[i][0] != dims[i+1][0]) || (dims[i][1] != dims[i+1][1])
-        file = info ? prepare_thumbnail( info, * dims[i]) : backstop
-        yield file, dims[i], sizes
+        if info
+          file, w, h = send( prepare, info, * dims[i])
+        else
+          file, w, h = backstop, * dims[i]
+        end
+        yield file, w, h, sizes
         sizes = ''
       end
     end
@@ -483,11 +481,15 @@ class Article
     html.write_css( '}')
     html.start_div( 'gallery t1')
 
+    dims = @compiler.dimensions( 'image')
     @images.each do |image|
-      prepare_source_images( html, image)
+      prepare_images( image, dims, :prepare_source_image) do |file, w, h, sizes|
+        html.image( file, w, h, image[:caption], sizes)
+      end
       html.add_caption( image[:caption]) if image[:caption]
     end
 
+    html.end_div
     html.end_div
     html.end_page
   end
@@ -509,10 +511,11 @@ class Article
       end
     end
 
+    dims = @compiler.dimensions( 'icon')
     @images.each_index do |i|
       next if i >= html.floats.size
-      prepare_thumbnails( @images[i]) do |image, dims, sizes|
-        html.add_float( image, * dims, sizes, i)
+      prepare_images( @images[i], dims, :prepare_source_image) do |image, w, h, sizes|
+        html.add_float( image, w, h, sizes, @images[i][:caption], i)
       end
     end
 
