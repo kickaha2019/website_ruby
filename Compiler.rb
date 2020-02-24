@@ -177,7 +177,6 @@ class Compiler
       end
     end
 
-    generated = []
     source = list_dir( @source + path)
     sink = list_dir( @sink + path)
 
@@ -188,8 +187,6 @@ class Compiler
     source_file = @source + path + "/index.txt"
     sink_file = @sink + path + "/index.txt"
     dir_article = Article.new( source_file, sink_file, params, self)
-    generated << 'index.html'
-    generated << 'index.php'
     if File.exist?( source_file)
       parse_defn( path, "index.txt", dir_article)
     end
@@ -204,19 +201,18 @@ class Compiler
 
     # Loop over source files - skip image files and other specials
     source.each do |file|
+      next if ['resources', 'templates', 'fileinfo'].include?( file)
+
       path1 = path + "/" + file
 
       if File.directory?( @source + path1)
         Dir.mkdir( @sink + path1) if not File.exists?( @sink + path1)
-        generated << file
         parse( dir_article, path1, params)
       elsif m = /^(.*)\.txt$/.match( file)
         if file != 'index.txt'
           child = Article.new( @source + path1, @sink + path1, params, self)
           dir_article.add_child( child)
           parse_defn( path, file, child)
-          generated << m[1]+".html"
-          generated << m[1]+".php"
         end
       elsif /\.rb$/ =~ file
         text = ['<?php',
@@ -226,18 +222,13 @@ class Compiler
         readlines( path, file, self) do |lineno, line|
           text << line
         end
-        html = HTML.new( @sink, @sink + path + '/' + file + '.php', @links, @templates)
+        html = HTML.new( @sink, record( @sink + path + '/' + file + '.php'), @links, @templates)
         html.start
         html.html( text)
         html.finish do |error|
           error( file, 0, error)
         end
-        generated << file + '.php'
-#      elsif /\.(html|php)$/ =~ file
-#        FileUtils.cp( @source + path1, @sink + path1)
-#        generated << file
       elsif /\.(JPG|jpg|png|zip)$/ =~ file
-        generated << file
       else
         raise "Unhandled file: #{path1}"
       end

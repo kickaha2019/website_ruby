@@ -91,7 +91,7 @@ class Commands
 	end
 
 	def Image( article, lineno, entry)
-		add_image( article, lineno, entry)
+		Images( article, lineno, entry)
 	end
 
 	def Images( article, lineno, entry)

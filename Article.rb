@@ -432,7 +432,7 @@ class Article
       if not File.exists?( path)
         error( 0, "Icon #{path} not found")
       else
-        @icon = describe_image( lineno, path, '')
+        @icon = describe_image( lineno, path, nil)
       end
     end
   end
@@ -485,7 +485,7 @@ class Article
 
     @images.each do |image|
       prepare_source_images( html, image)
-      html.add_caption( image[:caption])
+      html.add_caption( image[:caption]) if image[:caption]
     end
 
     html.end_div
