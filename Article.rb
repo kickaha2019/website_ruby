@@ -23,7 +23,7 @@ class Article
     @php = false
 
     add_content do |parents, html|
-      if @images.size > 2
+      if picture_page?
         html.set_max_floats( @images.size)
         html.breadcrumbs( parents, title, true)
       else
@@ -37,13 +37,8 @@ class Article
         html.start_div( 'story t1')
       end
 
-      if @images.size == 1
-        html.write_css( '@media all and (max-width: 1279px) {')
-        html.write_css( '  .indexes {display: none}')
-        html.write_css( '}')
-        html.start_div( 'gallery t1')
-        prepare_source_images( html, @images[0])
-        html.end_div
+      if (@images.size > 0) && (! picture_page?)
+        prepare_source_images( html, (@images.size > 0) || (@content.size > 1))
       end
     end
 
@@ -143,7 +138,7 @@ class Article
       caption = nil
     end
 
-    caption = "#{source_filename}:#{lineno}" unless caption
+    # caption = "#{source_filename}:#{lineno}" unless caption
     fileinfo = @compiler.fileinfo( image_filename)
     info = nil
     ts = File.mtime( image_filename).to_i
@@ -163,13 +158,15 @@ class Article
       to_delete = []
       sink_dir = File.dirname( @compiler.sink_filename( image_filename))
 
-      Dir.entries( sink_dir).each do |f|
-        if m = /^(.*)_\d+_\d+(\..*)$/.match( f)
-          to_delete << f if image_filename.split('/')[-1] == (m[1] + m[2])
+      if File.directory?( sink_dir)
+        Dir.entries( sink_dir).each do |f|
+          if m = /^(.*)_\d+_\d+(\..*)$/.match( f)
+            to_delete << f if image_filename.split('/')[-1] == (m[1] + m[2])
+          end
         end
-      end
 
-      to_delete.each {|f| File.delete( sink_dir + '/' + f)}
+        to_delete.each {|f| File.delete( sink_dir + '/' + f)}
+      end
     end
 
     {lineno:lineno, image:image_filename, caption:caption, width:info[1], height:info[2]}
@@ -372,11 +369,21 @@ class Article
     return imagefile, w, h
   end
 
-  def prepare_source_images( html, image)
+  def prepare_source_images( html, caption)
+    html.write_css( '@media all and (max-width: 1279px) {')
+    html.write_css( '  .indexes {display: none}')
+    html.write_css( '}')
+    html.start_div( 'gallery t1')
+
     dims = @compiler.dimensions( 'image')
-    prepare_images( image, dims, :prepare_source_image) do |file, w, h, sizes|
-      html.image( file, w, h, image[:caption], sizes)
+    @images.each do |image|
+      prepare_images( image, dims, :prepare_source_image) do |file, w, h, sizes|
+        html.image( file, w, h, image[:caption], sizes)
+      end
+      html.add_caption( image[:caption]) if caption && image[:caption]
     end
+
+    html.end_div
   end
 
   def prepare_thumbnail( info, width, height)
@@ -474,34 +481,17 @@ class Article
   end
 
   def to_pictures( parents, html)
+    html.start_page( get("TITLE"))
+    html.breadcrumbs( parents + [self], 'Pictures', false)
     html.start_div( 'payload content')
     index( parents, html, false)
-    html.write_css( '@media all and (max-width: 1279px) {')
-    html.write_css( '  .indexes {display: none}')
-    html.write_css( '}')
-    html.start_div( 'gallery t1')
-
-    dims = @compiler.dimensions( 'image')
-    @images.each do |image|
-      prepare_images( image, dims, :prepare_source_image) do |file, w, h, sizes|
-        html.image( file, w, h, image[:caption], sizes)
-      end
-      html.add_caption( image[:caption]) if image[:caption]
-    end
-
-    html.end_div
+    prepare_source_images( html, true)
     html.end_div
     html.end_page
   end
 
   def to_html( parents, html)
     html.start_page( get("TITLE"))
-
-    if (@content.size < 2) && (@images.size > 0)
-      html.breadcrumbs( parents, title, false)
-      to_pictures( parents, html)
-      return
-    end
 
     @content.each do |item|
       if item.is_a?( Array)
@@ -538,5 +528,12 @@ class Article
 
   def picture_filename
     source_filename[0..-5] + '_pictures.html'
+  end
+
+  def picture_page?
+    return false if @images.size == 0
+    return true if (@images.size >= 2) && (@content.size > 1)
+    return true if children.size > 0
+    false
   end
 end

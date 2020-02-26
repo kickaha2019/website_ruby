@@ -234,18 +234,6 @@ class Compiler
       end
     end
 
-    # Delete any sink files not regenerated
-    # (sink - generated).each do |file|
-    #   path1 = @sink + path + "/" + file
-    #   next if cached_file?( path1)
-    #   #p ['DEBUG100', path1]
-    #   if File.directory?( path1)
-    #     FileUtils.remove_dir( path1)
-    #   else
-    #     FileUtils.remove_file( path1)
-    #   end
-    # end
-
     dir_article
   end
 
@@ -369,7 +357,7 @@ class Compiler
   def regenerate( parents, article)
     debug_hook( article)
 
-    if article.has_content? || (article.images.size < 2)
+    if article.has_content? || (! article.picture_page?)
       html = HTML.new( @sink, record( sink_filename( article.sink_filename)), @links, @templates)
       html.start
       article.to_html( parents, html)
@@ -378,12 +366,9 @@ class Compiler
       end
     end
 
-    if article.images.size >= 2
-      filename = article.has_content? ? article.picture_filename : article.sink_filename
-      html = HTML.new( @sink, record( sink_filename( filename)), @links, @templates)
+    if article.picture_page?
+      html = HTML.new( @sink, record( sink_filename( article.picture_filename)), @links, @templates)
       html.start
-      html.start_page( article.get("TITLE"))
-      html.breadcrumbs( parents + [article], 'Pictures', false)
       article.to_pictures( parents, html)
       html.finish do |error|
         article.error( 0, error)
