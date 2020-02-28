@@ -14,6 +14,12 @@ def load_filtered( path)
   lines.select! do |line|
     ! (/marker\.bindPopup/ =~ line)
   end
+  lines.select! do |line|
+    ! (/^<link rel/ =~ line)
+  end
+  lines.select! do |line|
+    ! (/^resources\/logo_/ =~ line)
+  end
   lines.join( "\n")
 end
 

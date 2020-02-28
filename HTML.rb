@@ -5,7 +5,7 @@ class HTML
   attr_reader :floats
   @@links = {}
 
-  def initialize( sink, path, links, templates)
+  def initialize( sink, path, links, templates, defines)
     @path         = path
     @output       = []
     @css          = []
@@ -14,6 +14,7 @@ class HTML
     @floats       = []
     @sink         = sink
     @templates    = templates
+    @defines      = defines
     @n_anchors    = 0
     @max_floats   = 0
 
@@ -354,6 +355,9 @@ class HTML
   def start_page( title)
     rp = relative_path( @path, @sink)
     @templates['header'].each do |line|
+      @defines.each_pair do |k,v|
+        line = line.gsub( "$#{k}$", v)
+      end
       @output << line.gsub( '$TITLE$', title).gsub( '$SITE$', rp)
     end
   end

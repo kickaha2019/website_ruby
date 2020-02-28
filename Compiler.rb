@@ -63,6 +63,7 @@ class Compiler
     @links = YAML.load( File.open( source + "/links.yaml"))
     @dimensions = YAML.load( File.open( source + "/dimensions.yaml"))
     @generated = {}
+    @variables = {}
   end
 
 # =================================================================
@@ -85,9 +86,7 @@ class Compiler
     root_article = parse( nil, "", {})
 
     # Sync the resource files
-    if ! system( "rsync -a --exclude='*.psd' #{@source}/resources #{@sink}")
-      raise "Error synching resource files"
-    end
+    sync_resources( @source + '/resources', @sink + '/resources', /\.(png|css|jpg)$/)
 
     # Prepare the articles now all articles parsed
     prepare( root_article, root_article)
@@ -222,7 +221,8 @@ class Compiler
         readlines( path, file, self) do |lineno, line|
           text << line
         end
-        html = HTML.new( @sink, record( @sink + path + '/' + file + '.php'), @links, @templates)
+        html = HTML.new( @sink, record( @sink + path + '/' + file + '.php'),
+                         @links, @templates, @variables)
         html.start
         html.html( text)
         html.finish do |error|
@@ -358,7 +358,8 @@ class Compiler
     debug_hook( article)
 
     if article.has_content? || (! article.picture_page?)
-      html = HTML.new( @sink, record( sink_filename( article.sink_filename)), @links, @templates)
+      html = HTML.new( @sink, record( sink_filename( article.sink_filename)),
+                       @links, @templates, @variables)
       html.start
       article.to_html( parents, html)
       html.finish do |error|
@@ -367,7 +368,8 @@ class Compiler
     end
 
     if article.picture_page?
-      html = HTML.new( @sink, record( sink_filename( article.picture_filename)), @links, @templates)
+      html = HTML.new( @sink, record( sink_filename( article.picture_filename)),
+                       @links, @templates, @variables)
       html.start
       article.to_pictures( parents, html)
       html.finish do |error|
@@ -540,6 +542,9 @@ class Compiler
   end
 
   def sink( path)
+    if m = /^(\/resources\/)(.*)$/.match( path)
+      path = m[1] + @variables[m[2]]
+    end
     @sink + path
   end
 
@@ -602,7 +607,6 @@ class Compiler
   end
 
   def tidy_up( path)
-    return true if @sink + '/resources' == path
     keep = false
     Dir.entries( path).each do |f|
       next if /^\./ =~ f
@@ -629,6 +633,21 @@ class Compiler
   def record( path)
     @generated[path] = true
     path
+  end
+
+  def sync_resources( from, to, match)
+    Dir.mkdir( from) unless File.exist?( to)
+    Dir.entries( from).each do |f|
+      next unless match =~ f
+      input = from + '/' + f
+      f1 = f.split('.')[0] + "_#{File.mtime(input).to_i}." + f.split('.')[1]
+      @variables[f] = f1
+      output = to + '/' + f1
+      record( output)
+      unless File.exist?( output)
+        FileUtils.cp( input, output)
+      end
+    end
   end
 end
 

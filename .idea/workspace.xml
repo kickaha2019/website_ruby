@@ -3,8 +3,9 @@
   <component name="ChangeListManager">
     <list default="true" id="9e440521-c7e4-4f23-9012-a98effea9bfa" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Article.rb" beforeDir="false" afterPath="$PROJECT_DIR$/Article.rb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Compiler.rb" beforeDir="false" afterPath="$PROJECT_DIR$/Compiler.rb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/HTML.rb" beforeDir="false" afterPath="$PROJECT_DIR$/HTML.rb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/check_golden_files.rb" beforeDir="false" afterPath="$PROJECT_DIR$/check_golden_files.rb" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -57,7 +58,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Ruby.Revamp website">
+  <component name="RunManager" selected="Ruby.Build website">
     <configuration name="Add gallery" type="RubyRunConfigurationType" factoryName="Ruby">
       <module name="ruby" />
       <RUBY_RUN_CONFIG NAME="RUBY_ARGS" VALUE="" />
@@ -91,7 +92,7 @@
         </COVERAGE_PATTERN>
       </EXTENSION>
       <RUBY_RUN_CONFIG NAME="SCRIPT_PATH" VALUE="$MODULE_DIR$/run.rb" />
-      <RUBY_RUN_CONFIG NAME="SCRIPT_ARGS" VALUE="$MODULE_DIR$/../Articles $USER_HOME$/Sites/Articles $USER_HOME$/Sites data/cache.yaml" />
+      <RUBY_RUN_CONFIG NAME="SCRIPT_ARGS" VALUE="$MODULE_DIR$/../Articles $USER_HOME$/Sites/Articles" />
       <method v="2" />
     </configuration>
     <configuration name="Check golden files" type="RubyRunConfigurationType" factoryName="Ruby">
@@ -350,7 +351,9 @@
       <workItem from="1582567926578" duration="1458000" />
       <workItem from="1582573664963" duration="2566000" />
       <workItem from="1582667780188" duration="3053000" />
-      <workItem from="1582736990477" duration="754000" />
+      <workItem from="1582736990477" duration="1343000" />
+      <workItem from="1582906359031" duration="2315000" />
+      <workItem from="1582926944044" duration="641000" />
     </task>
     <servers />
   </component>
@@ -380,7 +383,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="ruby-line">
           <url>file://$PROJECT_DIR$/check_golden_files.rb</url>
-          <line>28</line>
+          <line>34</line>
           <option name="timeStamp" value="13" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="ruby-line">
@@ -417,7 +420,7 @@
     <SUITE FILE_PATH="coverage/ruby@Revamp_website.rcov" NAME="Revamp website Coverage Results" MODIFIED="1582737921722" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Find_links.rcov" NAME="Find links Coverage Results" MODIFIED="1580854552539" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Check_golden_files.rcov" NAME="Check golden files Coverage Results" MODIFIED="1580561198515" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
-    <SUITE FILE_PATH="coverage/ruby@Build_website.rcov" NAME="Build website Coverage Results" MODIFIED="1580584469883" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." MODULE_NAME="ruby" />
+    <SUITE FILE_PATH="coverage/ruby@Build_website.rcov" NAME="Build website Coverage Results" MODIFIED="1582927283235" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." MODULE_NAME="ruby" />
   </component>
   <component name="hg4idea.settings">
     <option name="CHECK_INCOMING_OUTGOING" value="true" />
