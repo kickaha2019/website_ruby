@@ -177,14 +177,13 @@ class Compiler
     end
 
     source = list_dir( @source + path)
-    sink = list_dir( @sink + path)
 
     # Load any new parameters
     params = load_parameters( params, path)
 
     # Generate article for the directory
     source_file = @source + path + "/index.txt"
-    sink_file = @sink + path + "/index.txt"
+    sink_file = @sink + path + "/index.html"
     dir_article = Article.new( source_file, sink_file, params, self)
     if File.exist?( source_file)
       parse_defn( path, "index.txt", dir_article)
@@ -209,7 +208,7 @@ class Compiler
         parse( dir_article, path1, params)
       elsif m = /^(.*)\.txt$/.match( file)
         if file != 'index.txt'
-          child = Article.new( @source + path1, @sink + path1, params, self)
+          child = Article.new( @source + path1, @sink + path + "/#{m[1]}.html", params, self)
           dir_article.add_child( child)
           parse_defn( path, file, child)
         end
@@ -357,9 +356,8 @@ class Compiler
   def regenerate( parents, article)
     debug_hook( article)
 
-    if article.has_content? || (! article.picture_page?)
-      html = HTML.new( @sink, record( sink_filename( article.sink_filename)),
-                       @links, @templates, @variables)
+    if article.has_content? || (! article.has_picture_page?)
+      html = HTML.new( @sink, record( article.sink_filename), @links, @templates, @variables)
       html.start
       article.to_html( parents, html)
       html.finish do |error|
@@ -367,8 +365,8 @@ class Compiler
       end
     end
 
-    if article.picture_page?
-      html = HTML.new( @sink, record( sink_filename( article.picture_filename)),
+    if article.has_picture_page?
+      html = HTML.new( @sink, record( article.picture_sink_filename),
                        @links, @templates, @variables)
       html.start
       article.to_pictures( parents, html)
@@ -379,32 +377,6 @@ class Compiler
 
     article.children.each do |child|
       regenerate( parents + [article], child) if child.is_a?( Article)
-    end
-  end
-
-  def sort( articles, order)
-    ascending = true
-    ascending, order = false, order[0...-1] if order[-1] == '-'
-    return articles if order == 'None'
-
-    articles.sort do |a,b|
-      a, b = b, a if not ascending
-
-      if order == "Date"
-        if a.date.nil? and b.date.nil?
-          a.title.downcase <=> b.title.downcase
-        elsif a.date.nil?
-          1
-        elsif b.date.nil?
-          -1
-        else
-          a.date <=> b.date
-        end
-      elsif order == "Person"
-        a.name.split("_").reverse.join( " ") <=> b.name.split("_").reverse.join( " ")
-      else
-        a.title.downcase <=> b.title.downcase
-      end
     end
   end
 
@@ -426,21 +398,6 @@ class Compiler
 
   def errors?
     @errors > 0
-  end
-
-  def get_cache( filename, variant='')
-    key = filename + "#{variant}\t" + File.mtime(filename).to_i.to_s
-    return key, @new_cache[ key] if @new_cache[ key]
-
-    entry = @old_cache[key]
-
-    if not entry
-      entry = yield filename
-      return nil, nil if not entry
-    end
-
-    @new_cache[ key] = entry
-    return key, entry
   end
 
   def get_local_links( path)
@@ -472,7 +429,7 @@ class Compiler
     file[0..(@source.size)] == (@source + '/')
   end
 
-# List files in a directory
+  # List files in a directory
   def list_dir( path)
     files = []
     d = Dir.new( path)
@@ -529,56 +486,18 @@ class Compiler
     puts message
   end
 
-  # def relative_path( from, to)
-  #   return nil if to.nil?
-  #   return nil if not to = begins( to, @webroot + "/")
-  #   subdir = (@sink == @webroot) ? "" : begins( @sink, @webroot + "/")
-  #   raise "Sink not inside website" if not subdir
-  #   relative_path( subdir + from, to)
-  # end
-
-  def root_source_filename( file)
-    @source + '/' + file
-  end
-
-  def sink( path)
-    if m = /^(\/resources\/)(.*)$/.match( path)
-      path = m[1] + @variables[m[2]]
-    end
-    @sink + path
-  end
-
   def sink_filename( file)
     if is_source_file?( file)
       return @sink + file[(@source.size)..-1]
+    end
+    if m = /^(\/resources\/)(.*)$/.match( file)
+      return @sink + m[1] + @variables[m[2]]
     end
     file
   end
 
   def source
     @source
-  end
-
-  def source_filename( path, file)
-    if /^\// =~ file
-#			p ['Compiler.source_filename', path, file]
-      return file
-#			return file if File.exists?( file)
-#			p [path, file]
-#			raise "Unexpected"
-    end
-    return (@source + file) if /^\// =~ file
-    source_sink_filename( path, file)
-  end
-
-  def source_sink_filename( path, file)
-    #p ['Compiler.source_sink_filename', path, file]
-    file = "../" + file if /\.txt$/ =~ path
-    while /^\.\.\// =~ file
-      path = path.split( "/")[0..-2].join( "/")
-      file = file[3..-1]
-    end
-    path + "/" + file
   end
 
   def strip( lines)
@@ -592,10 +511,6 @@ class Compiler
     lines.collect do |line|
       (line.size > indent) ? line[indent..-1] : ''
     end
-  end
-
-  def to_xml_date( time)
-    sprintf( "%04d-%02d-%02dT%02d:%02d:%02dZ", time.year, time.mon, time.day, time.hour, time.min, time.sec)
   end
 
   def fileinfo( filename)

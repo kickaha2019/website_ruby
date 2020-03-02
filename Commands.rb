@@ -16,10 +16,6 @@ class Commands
 		end
 	end
 
-	def Centre( article, lineno, entry)
-		add_image( article, lineno, entry)
-	end
-	
 	def Code( article, lineno, entry)
 		if entry.size < 1
 			article.error( lineno, "No lines for code")
@@ -98,10 +94,6 @@ class Commands
 		Gallery( article, lineno, entry)
 	end
 
-	def Left( article, lineno, entry)
-		add_image( article, lineno, entry)
-	end
-	
 	def Link( article, lineno, entry)
 		if (entry.size < 1) || (entry.size > 2)
 			article.error( lineno, "Links should have one or two lines in the entry")
@@ -124,10 +116,6 @@ class Commands
 		end
 	end
 
-	def Right( article, lineno, entry)
-		add_image( article, lineno, entry)
-	end
-	
 	def Table( article, lineno, entry)
 		article.add_content do |parents, html|
 			html.start_table( article.get( "TABLE_CLASS"))

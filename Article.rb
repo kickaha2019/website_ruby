@@ -7,9 +7,9 @@
 require 'fileutils'
 
 class Article
-    attr_accessor :content_added, :images
+    attr_accessor :content_added, :images, :sink_filename
 
-  def initialize( source, sink, params, compiler)
+    def initialize( source, sink, params, compiler)
     @source_filename = source
     @sink_filename = sink
     @params = params
@@ -20,10 +20,9 @@ class Article
     @children_sorted = false
     @images   = []
     @icon = nil
-    @php = false
 
     add_content do |parents, html|
-      if picture_page?
+      if has_picture_page?
         html.set_max_floats( @images.size)
         html.breadcrumbs( parents, title, true)
       else
@@ -37,8 +36,8 @@ class Article
         html.start_div( 'story t1')
       end
 
-      if (@images.size > 0) && (! picture_page?)
-        prepare_source_images( html, (@images.size > 0) || (@content.size > 1))
+      if (@images.size > 0) && (! has_picture_page?)
+        prepare_source_images( html, (@images.size > 1) || (@content.size == 1))
       end
     end
 
@@ -91,7 +90,7 @@ class Article
 
   def children
     if not @children_sorted
-      @children = @compiler.sort( @children, get( "ORDER"))
+      @children = sort( @children, get( "ORDER"))
       @children_sorted = true
     end
     @children
@@ -133,7 +132,7 @@ class Article
   end
 
   def describe_image( lineno, image_filename, caption)
-    if /[\.\["\|<>]/ =~ caption
+    if /[\["\|<>]/ =~ caption
       error( lineno, "Image caption containing special character: " + caption)
       caption = nil
     end
@@ -231,6 +230,13 @@ class Article
     @content.size > 0
   end
 
+  def has_picture_page?
+    return false if @images.size == 0
+    return true if (@images.size >= 2) && (@content.size > 1)
+    return true if children.size > 0
+    false
+  end
+
   def has_text?
     @has_text
   end
@@ -301,11 +307,6 @@ class Article
     (0..7).each {html.add_index_dummy}
   end
 
-  def is_source_file?( file)
-    @compiler.is_source_file?( file)
-    #File.exists?( source_filename( file))
-  end
-
   def name
     if m = /(^|\/)([^\/]*)\.txt/.match( @source_filename)
       m[2]
@@ -314,12 +315,9 @@ class Article
     end
   end
 
-  def next_gallery_index
-    @galleries += 1
-  end
-
-  def php?
-    @php
+  def picture_sink_filename
+    m = /^(.*)\.[a-zA-Z]*$/.match( @sink_filename)
+    m[1] + '_pictures.html'
   end
 
   def prepare( root_article)
@@ -336,17 +334,6 @@ class Article
       words << "..."
     end
     words.join( "&nbsp;")
-  end
-
-  def prepare_sink_image( lineno, file, tw, th)
-    key, info = @compiler.get_cache( file) do |filename|
-      get_image_dims( lineno, filename)
-    end
-    return "" if not info
-
-    constrain_dims( tw, th, info[:width], info[:height])
-    #[info[:width], info[:height]]
-    #"<IMG #{inject}SRC=\"#{rp}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" ALT=\"#{alt_text}\">"
   end
 
   def prepare_source_image( info, width, height)
@@ -404,7 +391,7 @@ class Article
   end
 
   def prepare_images( info, dims, prepare)
-    backstop = @compiler.sink( "/resources/down_cyan.png")
+    backstop = @compiler.sink_filename( "/resources/down_cyan.png")
     sizes = ''
     (0...dims.size).each do |i|
       sizes = sizes + " size#{i}"
@@ -424,10 +411,6 @@ class Article
     HTML.prettify( name)
   end
 
-  def root_source_filename( file)
-    @compiler.root_source_filename( file)
-  end
-
   def set_date( t)
     @date = t if @date.nil?
   end
@@ -443,7 +426,12 @@ class Article
   end
 
   def set_php
-    @php = true
+    return if /\.php$/ =~ @sink_filename
+    if m = /^(.*)\.html$/.match( @sink_filename)
+      @sink_filename = m[1] + '.php'
+    else
+      error( 0, 'Unable to set page to PHP')
+    end
   end
 
   def set_title( title)
@@ -468,8 +456,30 @@ class Article
     parents[-1].children
   end
 
-  def sink_filename
-    @sink_filename.sub( ".txt", php? ? ".php" : ".html")
+  def sort( articles, order)
+    ascending = true
+    ascending, order = false, order[0...-1] if order[-1] == '-'
+    return articles if order == 'None'
+
+    articles.sort do |a,b|
+      a, b = b, a if not ascending
+
+      if order == "Date"
+        if a.date.nil? and b.date.nil?
+          a.title.downcase <=> b.title.downcase
+        elsif a.date.nil?
+          1
+        elsif b.date.nil?
+          -1
+        else
+          a.date <=> b.date
+        end
+      elsif order == "Person"
+        a.name.split("_").reverse.join( " ") <=> b.name.split("_").reverse.join( " ")
+      else
+        a.title.downcase <=> b.title.downcase
+      end
+    end
   end
 
   def source_filename
@@ -516,24 +526,9 @@ class Article
     html.end_page
   end
 
-  def to_xml_date( time)
-    @compiler.to_xml_date( time)
-  end
-
   def validate_anchor( lineno, link)
     if ! @compiler.is_anchor_defined?(link)
       error( lineno, "Unknown anchor link: #{link}")
     end
-  end
-
-  def picture_filename
-    source_filename[0..-5] + '_pictures.html'
-  end
-
-  def picture_page?
-    return false if @images.size == 0
-    return true if (@images.size >= 2) && (@content.size > 1)
-    return true if children.size > 0
-    false
   end
 end
