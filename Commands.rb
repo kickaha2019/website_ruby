@@ -1,3 +1,14 @@
+require 'anchor'
+require 'code'
+require 'date'
+require 'heading'
+require 'html_block'
+require 'php'
+require 'table_end'
+require 'table_row'
+require 'table_start'
+require 'text'
+
 class Commands
 	@@default_date = Time.gm( 1970, "Jan", 1)
 	@@gallery_index = 0
@@ -11,20 +22,14 @@ class Commands
 			end
 		end
 
-		article.add_content do |parents, html|
-			html.anchor
-		end
+		article.add_content( Anchor.new)
 	end
 
 	def Code( article, lineno, entry)
 		if entry.size < 1
 			article.error( lineno, "No lines for code")
 		else
-			article.add_content do |parents, html|
-				html.code( entry) do |error|
-					article.error( lineno, error)
-				end
-			end
+			article.add_content( Code.new( entry))
 		end
 	end
 	
@@ -37,11 +42,7 @@ class Commands
 		t = convert_date( article, lineno, entry[0])
 		article.set_date( t)
 		
-		article.add_content do |parents, html|
-			html.date( t) do |error|
-				article.error( lineno, error)
-			end
-		end
+		article.add_content( Date.new( t))
 	end
 	
 	def Gallery( article, lineno, entry)
@@ -54,9 +55,7 @@ class Commands
 		if entry.size != 1
 			article.error( lineno, "Heading takes one line")
 		else
-			article.add_content do |parents, html|
-				html.heading( entry[0])
-			end
+			article.add_content( Heading.new( entry[0]))
 		end
 	end
 
@@ -64,11 +63,7 @@ class Commands
 		if entry.size < 1
 			article.error( lineno, "No lines for HTML")
 		else
-			article.add_content do |parents, html|
-				html.html( entry) do |error|
-					article.error( lineno, error)
-				end
-			end
+			article.add_content( HTMLBlock.new( entry))
 		end
 	end
 	
@@ -108,19 +103,13 @@ class Commands
 		if entry.size < 1
 			article.error( lineno, "No lines for code")
 		else
-			article.add_content do |parents, html|
-				html.php( entry) do |error|
-					article.error( lineno, error)
-				end
-			end
+			article.add_content( PHP.new( entry))
 		end
 	end
 
 	def Table( article, lineno, entry)
-		article.add_content do |parents, html|
-			html.start_table( article.get( "TABLE_CLASS"))
-		end
-	
+		article.add_content( TableStart.new)
+
 		width = 1
 		entry_lines( entry, lineno) do |line, line_lineno|
 			w = line.split('|').size
@@ -128,37 +117,17 @@ class Commands
 		end
 
 		entry_lines( entry, lineno) do |line, line_lineno|
-			article.add_content do |parents, html|
-				html.start_table_row
-				fields = line.split('|')
-				fields.each do |field|
-					html.start_table_cell
-					html.write( field)
-					html.end_table_cell
-				end
-				(fields.size...width).each do
-					html.start_table_cell
-					html.nbsp
-					html.end_table_cell
-				end
-				html.end_table_row
-			end
+			article.add_content( TableRow.new( line, width))
 		end
-		
-		article.add_content do |parents, html|
-			html.end_table
-		end
+
+		article.add_content( TableEnd.new)
 	end
 	
 	def Text( article, lineno, entry)
 		if entry.size < 1
 			article.error( lineno, "No lines for text")
 		else
-			article.add_content do |parents, html|
-				html.text( parents, entry) do |error|
-					article.error( lineno, error)
-				end
-			end
+			article.add_content( Text.new( entry))
 		end
 	end
 	

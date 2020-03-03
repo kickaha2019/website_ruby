@@ -5,9 +5,10 @@
 =end
 
 require 'fileutils'
+require 'content_start'
 
 class Article
-    attr_accessor :content_added, :images, :sink_filename
+    attr_accessor :content_added, :images, :sink_filename, :content
 
     def initialize( source, sink, params, compiler)
     @source_filename = source
@@ -21,25 +22,7 @@ class Article
     @images   = []
     @icon = nil
 
-    add_content do |parents, html|
-      if has_picture_page?
-        html.set_max_floats( @images.size)
-        html.breadcrumbs( parents, title, true)
-      else
-        html.breadcrumbs( parents, title, false) if parents.size > 0
-      end
-      html.start_div( 'payload content')
-
-      index( parents, html, @images.size > 1)
-
-      if @content.size > 1
-        html.start_div( 'story t1')
-      end
-
-      if (@images.size > 0) && (! has_picture_page?)
-        prepare_source_images( html, (@images.size > 1) || (@content.size == 1))
-      end
-    end
+    add_content( ContentStart.new)
 
     sels = source.split( /[\/\.]/)
     set_title( ((sels[-2] != 'index') ? sels[-2] : sels[-3]))
@@ -50,7 +33,7 @@ class Article
     @children << article
   end
 
-  def add_content( &block)
+  def add_content( block)
     @content << block
   end
 
@@ -173,13 +156,6 @@ class Article
 
   def error( lineno, msg)
     @compiler.error( @source_filename, lineno, msg)
-  end
-
-  def find_content( type)
-      @content.each_index do |i|
-          return i if @content[i].is_a?( type)
-      end
-      nil
   end
 
   def get( name)
@@ -504,11 +480,12 @@ class Article
     html.start_page( get("TITLE"))
 
     @content.each do |item|
-      if item.is_a?( Array)
-        item[0].call( [parents, html, item[1]])
-      else
-        item.call( parents, html)
-      end
+      item.process( self, parents, html)
+      # if item.is_a?( Array)
+      #   item[0].call( [parents, html, item[1]])
+      # else
+      #   item.call( parents, html)
+      # end
     end
 
     dims = @compiler.dimensions( 'icon')
