@@ -19,4 +19,8 @@ class TableRow
     end
     html.end_table_row
   end
+
+  def wrap?
+    false
+  end
 end

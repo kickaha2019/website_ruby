@@ -473,7 +473,7 @@ class Compiler
 
   def load_templates
     Dir.entries( @source + '/templates').each do |f|
-      if m = /^(.*)\.html$/.match( f)
+      if m = /^(.*)\.(css|html)$/.match( f)
         @templates[m[1]] = IO.readlines( @source + '/templates/' + f).collect {|l| l.chomp}
       end
       if /^(.*)\.erb$/ =~ f

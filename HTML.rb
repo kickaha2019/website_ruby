@@ -271,6 +271,12 @@ class HTML
     @output << '&nbsp;'
   end
 
+  def no_indexes
+    @templates['no_indexes'].each do |line|
+      write_css( line)
+    end
+  end
+
   def php( lines)
     @output << "<?php"
     lines.each do |line|
@@ -315,6 +321,12 @@ class HTML
 
   def set_max_floats( n)
     @max_floats = n
+  end
+
+  def small_no_indexes
+    @templates['small_no_indexes'].each do |line|
+      write_css( line)
+    end
   end
 
   def start

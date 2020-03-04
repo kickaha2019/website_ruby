@@ -232,12 +232,23 @@ class Article
   end
 
   def index( parents, html, pictures)
+    wrap = true
+    @content.each do |item|
+      wrap = false unless item.wrap?
+    end
+
     if index_children? && (@children.size > 0)
       to_index = children
+      error( 0, 'Some content does not wrap but has children') unless wrap
     else
       to_index = siblings( parents).select {|a| a.has_content? && (a != self)}
     end
-    return if to_index.size == 0
+
+    if to_index.size == 0
+      html.no_indexes
+      return
+    end
+    html.small_no_indexes unless wrap
 
     html.start_indexes
 
@@ -333,9 +344,7 @@ class Article
   end
 
   def prepare_source_images( html, caption)
-    html.write_css( '@media all and (max-width: 1279px) {')
-    html.write_css( '  .indexes {display: none}')
-    html.write_css( '}')
+    html.small_no_indexes
     html.start_div( 'gallery t1')
 
     dims = @compiler.dimensions( 'image')
@@ -481,11 +490,6 @@ class Article
 
     @content.each do |item|
       item.process( self, parents, html)
-      # if item.is_a?( Array)
-      #   item[0].call( [parents, html, item[1]])
-      # else
-      #   item.call( parents, html)
-      # end
     end
 
     dims = @compiler.dimensions( 'icon')

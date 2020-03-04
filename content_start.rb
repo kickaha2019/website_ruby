@@ -18,4 +18,8 @@ class ContentStart
       article.prepare_source_images( html, (article.images.size > 1) || (article.content.size == 1))
     end
   end
+
+  def wrap?
+    true
+  end
 end

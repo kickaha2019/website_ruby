@@ -8,4 +8,8 @@ class HTMLBlock
       article.error( lineno, error)
     end
   end
+
+  def wrap?
+    false
+  end
 end

@@ -8,4 +8,8 @@ class Text
       article.error( lineno, error)
     end
   end
+
+  def wrap?
+    true
+  end
 end

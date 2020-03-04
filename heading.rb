@@ -6,4 +6,8 @@ class Heading
   def process( article, parents, html)
     html.heading( @entry)
   end
+
+  def wrap?
+    true
+  end
 end

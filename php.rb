@@ -8,4 +8,8 @@ class PHP
       article.error( lineno, error)
     end
   end
+
+  def wrap?
+    false
+  end
 end
