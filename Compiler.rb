@@ -141,7 +141,7 @@ class Compiler
           end
         end
 
-        url = "#{@source}#{path1.gsub( /\.txt$/, php ? '.php' : '.html')}##{count}"
+        url = "#{@source}#{path1.gsub( /\.txt$/, php ? '.php' : '.html')}#a#{count}"
         found.each do |link|
           @anchors[link][:links] << url
         end

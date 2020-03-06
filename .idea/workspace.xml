@@ -3,20 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="9e440521-c7e4-4f23-9012-a98effea9bfa" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Article.rb" beforeDir="false" afterPath="$PROJECT_DIR$/Article.rb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Commands.rb" beforeDir="false" afterPath="$PROJECT_DIR$/Commands.rb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Compiler.rb" beforeDir="false" afterPath="$PROJECT_DIR$/Compiler.rb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/HTML.rb" beforeDir="false" afterPath="$PROJECT_DIR$/HTML.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/anchor.rb" beforeDir="false" afterPath="$PROJECT_DIR$/anchor.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/code.rb" beforeDir="false" afterPath="$PROJECT_DIR$/code.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/content_start.rb" beforeDir="false" afterPath="$PROJECT_DIR$/content_start.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/date.rb" beforeDir="false" afterPath="$PROJECT_DIR$/date.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/heading.rb" beforeDir="false" afterPath="$PROJECT_DIR$/heading.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/html_block.rb" beforeDir="false" afterPath="$PROJECT_DIR$/html_block.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/php.rb" beforeDir="false" afterPath="$PROJECT_DIR$/php.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/table_end.rb" beforeDir="false" afterPath="$PROJECT_DIR$/table_end.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/table_row.rb" beforeDir="false" afterPath="$PROJECT_DIR$/table_row.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/table_start.rb" beforeDir="false" afterPath="$PROJECT_DIR$/table_start.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/text.rb" beforeDir="false" afterPath="$PROJECT_DIR$/text.rb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/validate_reachability.rb" beforeDir="false" afterPath="$PROJECT_DIR$/validate_reachability.rb" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -215,6 +205,24 @@
       <RUBY_RUN_CONFIG NAME="SCRIPT_ARGS" VALUE="$MODULE_DIR$/../Articles $USER_HOME$/Temp/Articles" />
       <method v="2" />
     </configuration>
+    <configuration name="Validate reachability" type="RubyRunConfigurationType" factoryName="Ruby">
+      <module name="ruby" />
+      <RUBY_RUN_CONFIG NAME="RUBY_ARGS" VALUE="" />
+      <RUBY_RUN_CONFIG NAME="WORK DIR" VALUE="$MODULE_DIR$" />
+      <RUBY_RUN_CONFIG NAME="SHOULD_USE_SDK" VALUE="false" />
+      <RUBY_RUN_CONFIG NAME="ALTERN_SDK_NAME" VALUE="" />
+      <RUBY_RUN_CONFIG NAME="myPassParentEnvs" VALUE="true" />
+      <EXTENSION ID="BundlerRunConfigurationExtension" bundleExecEnabled="false" />
+      <EXTENSION ID="JRubyRunConfigurationExtension" NailgunExecEnabled="false" />
+      <EXTENSION ID="RubyCoverageRunConfigurationExtension" track_test_folders="true" runner="rcov">
+        <COVERAGE_PATTERN ENABLED="true">
+          <PATTERN REGEXPS="/.rvm/" INCLUDED="false" />
+        </COVERAGE_PATTERN>
+      </EXTENSION>
+      <RUBY_RUN_CONFIG NAME="SCRIPT_PATH" VALUE="$MODULE_DIR$/validate_reachability.rb" />
+      <RUBY_RUN_CONFIG NAME="SCRIPT_ARGS" VALUE="$USER_HOME$/Sites --exclude adventureconvention pagoda pagoda_editor Games h10 henge MyGames_extras music connect.php bandwidth.php Games seetheworld Reviews resources Article_resources Articles/resources" />
+      <method v="2" />
+    </configuration>
     <list>
       <item itemvalue="Ruby.Build website" />
       <item itemvalue="Ruby.Revamp website" />
@@ -224,6 +232,7 @@
       <item itemvalue="Ruby.Check links" />
       <item itemvalue="Ruby.Add gallery" />
       <item itemvalue="Ruby.Find links" />
+      <item itemvalue="Ruby.Validate reachability" />
     </list>
   </component>
   <component name="SpringUtil" SPRING_PRE_LOADER_OPTION="true" RAKE_SPRING_PRE_LOADER_OPTION="false" RAILS_SPRING_PRE_LOADER_OPTION="false" />
@@ -374,6 +383,8 @@
       <workItem from="1583267374024" duration="463000" />
       <workItem from="1583275910493" duration="1253000" />
       <workItem from="1583359997707" duration="1496000" />
+      <workItem from="1583449089428" duration="1251000" />
+      <workItem from="1583492435710" duration="1015000" />
     </task>
     <servers />
   </component>
@@ -437,8 +448,9 @@
     <SUITE FILE_PATH="coverage/ruby@Check_links.rcov" NAME="Check links Coverage Results" MODIFIED="1576966397737" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Add_gallery.rcov" NAME="Add gallery Coverage Results" MODIFIED="1579817652669" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/../Articles/Diary/2020/New_Zealand/2 Godzilla Hotel" MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Overlay_editor.rcov" NAME="Overlay editor Coverage Results" MODIFIED="1561805039803" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
-    <SUITE FILE_PATH="coverage/ruby@Revamp_website.rcov" NAME="Revamp website Coverage Results" MODIFIED="1583361745227" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." MODULE_NAME="ruby" />
+    <SUITE FILE_PATH="coverage/ruby@Revamp_website.rcov" NAME="Revamp website Coverage Results" MODIFIED="1583493520820" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Find_links.rcov" NAME="Find links Coverage Results" MODIFIED="1580854552539" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
+    <SUITE FILE_PATH="coverage/ruby@Validate_reachability.rcov" NAME="Validate reachability Coverage Results" MODIFIED="1583492917547" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Check_golden_files.rcov" NAME="Check golden files Coverage Results" MODIFIED="1583360059762" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Build_website.rcov" NAME="Build website Coverage Results" MODIFIED="1582927283235" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." MODULE_NAME="ruby" />
   </component>

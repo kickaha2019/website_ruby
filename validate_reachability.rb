@@ -37,7 +37,7 @@ class ValidateReachability
 				next if /^\./ =~ f
 				check( dir + '/' + f)
 			end
-		elsif /\.(html)$/ =~ dir
+		elsif /\.(html|php)$/ =~ dir
 			if not @reached[dir]
 				@errors += 1
 				if @errors <= MAX_ERRS

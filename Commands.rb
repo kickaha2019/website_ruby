@@ -152,7 +152,7 @@ class Commands
 	end
 	
 	def add_image( article, lineno, entry)
-		if entry.size < 1 or entry.size > 2
+		if entry.size != 2
 			article.error( lineno, "Bad image declaration")
 			return
 		end
@@ -169,19 +169,6 @@ class Commands
 		end
 
 		article.add_image( lineno, path, entry[1])
-		# article.add_image( float, lineno) do |parents, html|
-		# 	tw = article.get( type + '_WIDTH').to_i
-		# 	th = article.get( type + '_HEIGHT').to_i
-		# 	alt_text = article.get_image_caption( path)
-		# 	(w,h) = article.prepare_sink_image( lineno, path, tw, th)
-		# 	html.start_div( css_class)
-		# 	html.start_lightbox( path, alt_text, gallery_index)
-		# 	html.image( path, w, h, alt_text, float) do |error|
-		# 		article.error( lineno, error)
-		# 	end
-		# 	html.end_lightbox
-		# 	html.end_div
-		# end
 	end
 	
 	def convert_date( article, lineno, text)

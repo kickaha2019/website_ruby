@@ -16,6 +16,7 @@ class HTML
     @templates    = templates
     @defines      = defines
     @n_anchors    = 0
+    @div_id       = nil
     @max_floats   = 0
 
     if @@links.size == 0
@@ -62,11 +63,15 @@ class HTML
 
   def anchor
     @n_anchors += 1
-    @output << "<a name=\"#{@n_anchors}\"></a>"
+    if @div_id
+      @error = 'Previous anchor not used'
+    else
+      @div_id = "a#{@n_anchors}"
+    end
   end
 
   def breadcrumbs( parents, title, pictures_link)
-    @output << "<DIV CLASS=\"breadcrumbs t0 content\">"
+    start_div( 'breadcrumbs t0 content')
     parents.each do |parent|
       rp = relative_path( @path, parent.sink_filename)
       @output << "<A HREF=\"#{rp}\">#{HTML.prettify( parent.title)}</A> &raquo; "
@@ -89,7 +94,7 @@ class HTML
 
   def children( articles)
     articles.each do |article|
-      @output << "<DIV CLASS=\"index_text t0\">"
+      start_div( 'index_text t0')
       rp = relative_path( @path, article.sink_filename)
       @output << " &raquo; <A HREF=\"#{rp}\">#{HTML.prettify( article.title)}</A>"
       @output << "</DIV>"
@@ -97,7 +102,8 @@ class HTML
   end
 
   def code( lines)
-    sep = "<DIV CLASS=\"code\">"
+    start_div( 'code')
+    sep = ''
     lines.each do |line|
       @output << (sep + encode_special_chars( line).gsub( " ", "&nbsp;"))
       sep = "<BR>"
@@ -106,7 +112,8 @@ class HTML
   end
 
   def date( time)
-    @output << "<DIV CLASS=\"date\">" + format_date( time) + "</DIV>"
+    start_div( 'date')
+    @output << format_date( time) + "</DIV>"
   end
 
   def disable_float( float)
@@ -192,6 +199,10 @@ class HTML
       end
     end
 
+    if @div_id
+      @error = 'Last anchor not used'
+    end
+
     if @error
       yield @error
     end
@@ -249,6 +260,7 @@ class HTML
     end
 
     ref, text = defn[0], defn[1..-1].join(' ')
+    ref = ref + '.php' if /\.rb$/ =~ ref
     @@links[text] = ref
 
     if /^http/ =~ ref
@@ -333,35 +345,26 @@ class HTML
   end
 
   def start_code
-    @output << "<div class=\"code\">"
+    start_div( 'code')
   end
 
   def start_cell
-    @output << "<div class=\"cell\">"
+    start_div( 'cell')
   end
 
   def start_div( css_class=nil)
-    if css_class.nil?
-      @output << '<div>'
-    else
-      @output << "<div class=\"#{css_class}\">"
-    end
-  end
-
-  def start_gallery
-    @output << "<div class=\"gallery\">"
-  end
-
-  def start_grid
-    @output << "<div class=\"grid\">"
+    embed_id    = @div_id ? " id=\"#{@div_id}\"" : ''
+    embed_class = css_class ? " class=\"#{css_class}\"" : ''
+    @output << "<div#{embed_id}#{embed_class}>"
+    @div_id = nil
   end
 
   def start_index( index_classes)
-    @output << "<div class=\"index #{index_classes}\">"
+    start_div( "index #{index_classes}")
   end
 
   def start_indexes
-    @output << "<div class=\"indexes t0\">"
+    start_div( "indexes t0")
   end
 
   def start_page( title)
@@ -375,7 +378,8 @@ class HTML
   end
 
   def start_table( css_class)
-    @output << "<DIV CLASS=\"table\"><TABLE CLASS=\"#{css_class}\">"
+    start_div( 'table')
+    @output << "<TABLE CLASS=\"#{css_class}\">"
   end
 
   def start_table_cell
@@ -388,7 +392,7 @@ class HTML
 
   def text( parents, lines)
     written, float = 0, true
-    @output << "<DIV CLASS=\"text\">"
+    start_div( 'text')
 
     lines.each do |line|
       if line.strip == ''
