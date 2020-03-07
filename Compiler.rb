@@ -220,8 +220,7 @@ class Compiler
         readlines( path, file, self) do |lineno, line|
           text << line
         end
-        html = HTML.new( @sink, record( @sink + path + '/' + file + '.php'),
-                         @links, @templates, @variables)
+        html = HTML.new( self, @sink, @sink + path + '/' + file + '.php')
         html.start
         html.html( text)
         html.finish do |error|
@@ -357,7 +356,7 @@ class Compiler
     debug_hook( article)
 
     if article.has_content? || (! article.has_picture_page?)
-      html = HTML.new( @sink, record( article.sink_filename), @links, @templates, @variables)
+      html = HTML.new( self, @sink, article.sink_filename)
       html.start
       article.to_html( parents, html)
       html.finish do |error|
@@ -366,8 +365,7 @@ class Compiler
     end
 
     if article.has_picture_page?
-      html = HTML.new( @sink, record( article.picture_sink_filename),
-                       @links, @templates, @variables)
+      html = HTML.new( self, @sink, article.picture_sink_filename)
       html.start
       article.to_pictures( parents, html)
       html.finish do |error|
@@ -427,6 +425,10 @@ class Compiler
 
   def is_source_file?( file)
     file[0..(@source.size)] == (@source + '/')
+  end
+
+  def link( ref)
+    @links[ref]
   end
 
   # List files in a directory
@@ -563,6 +565,14 @@ class Compiler
         FileUtils.cp( input, output)
       end
     end
+  end
+
+  def template( name)
+    @templates[name]
+  end
+
+  def variables
+    @variables.each_pair {|k,v| yield k,v}
   end
 end
 

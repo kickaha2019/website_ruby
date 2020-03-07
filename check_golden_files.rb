@@ -34,11 +34,12 @@ def check_golden_files( dir)
     if File.directory?( golden)
       errors += check_golden_files( dir + '/' + f)
     elsif /\.html$/ =~ f
-      puts "... Checking #{golden}"
+      # puts "... Checking #{golden}"
       if File.exist?( generated)
         if load_filtered( golden) != load_filtered( generated)
           errors += 1
           puts "*** #{generated} doesn't match #{golden}"
+          puts "    diff #{generated} #{golden}"
         end
       else
         errors += 1

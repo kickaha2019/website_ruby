@@ -3,30 +3,24 @@ require 'yaml'
 
 class HTML
   attr_reader :floats
-  @@links = {}
 
-  def initialize( sink, path, links, templates, defines)
-    @path         = path
+  def initialize( compiler, sink, path)
+    @compiler     = compiler
+    @path         = @compiler.record( path)
     @output       = []
     @css          = []
     @error        = nil
     @float_height = 10
     @floats       = []
     @sink         = sink
-    @templates    = templates
-    @defines      = defines
     @n_anchors    = 0
     @div_id       = nil
     @max_floats   = 0
-
-    if @@links.size == 0
-      links.each_pair do |k,v|
-        @@links[k] = v
-      end
-    end
+    @local_links = {}
   end
 
   def add_float( img, w, h, classes, caption, float)
+    @compiler.record( img)
     rp = relative_path( @path, img)
     @output[@floats[float]] += "\n<IMG CLASS=\"#{classes}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" SRC=\"#{rp}\" ALT=\"#{caption}\">"
   end
@@ -156,7 +150,7 @@ class HTML
   end
 
   def end_page
-    @templates['footer'].each do |line|
+    @compiler.template('footer').each do |line|
       @output << line
     end
   end
@@ -236,6 +230,7 @@ class HTML
   end
 
   def image( file, w, h, alt_text, inject='')
+    @compiler.record( file)
     alt_text = 'TTBA' unless alt_text
     rp = relative_path( @path, file)
     @output << "<IMG CLASS=\"#{inject}\" SRC=\"#{rp}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" ALT=\"#{alt_text}\">"
@@ -249,8 +244,10 @@ class HTML
   end
 
   def link( defn)
-    if @@links[defn]
-      defn = @@links[defn] + ' ' + defn
+    if @local_links[defn]
+      defn = @local_links[defn] + ' ' + defn
+    elsif @compiler.link( defn)
+      defn = @compiler.link( defn) + ' ' + defn
     end
 
     defn = defn.split(' ')
@@ -261,7 +258,7 @@ class HTML
 
     ref, text = defn[0], defn[1..-1].join(' ')
     ref = ref + '.php' if /\.rb$/ =~ ref
-    @@links[text] = ref
+    @local_links[text] = ref
 
     if /^http/ =~ ref
       target = (/maps\.apple\.com/ =~ ref) ? '' : 'TARGET="_blank" '
@@ -284,7 +281,7 @@ class HTML
   end
 
   def no_indexes
-    @templates['no_indexes'].each do |line|
+    @compiler.template('no_indexes').each do |line|
       write_css( line)
     end
   end
@@ -336,7 +333,7 @@ class HTML
   end
 
   def small_no_indexes
-    @templates['small_no_indexes'].each do |line|
+    @compiler.template('small_no_indexes').each do |line|
       write_css( line)
     end
   end
@@ -369,8 +366,8 @@ class HTML
 
   def start_page( title)
     rp = relative_path( @path, @sink)
-    @templates['header'].each do |line|
-      @defines.each_pair do |k,v|
+    @compiler.template('header').each do |line|
+      @compiler.variables do |k,v|
         line = line.gsub( "$#{k}$", v)
       end
       @output << line.gsub( '$TITLE$', title).gsub( '$SITE$', rp)

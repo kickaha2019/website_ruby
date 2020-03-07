@@ -6,11 +6,26 @@
 
 require 'fileutils'
 require 'content_start'
+require 'image'
 
 class Article
-    attr_accessor :content_added, :images, :sink_filename, :content
+  attr_accessor :content_added, :images, :sink_filename, :content
 
-    def initialize( source, sink, params, compiler)
+  class BackstopIcon < Image
+    def initialize( sink)
+      super( nil, sink, nil, nil, nil, 0)
+    end
+
+    def prepare_thumbnail( width, height)
+      return @sink, width, height
+    end
+
+    def scaled_height( dim)
+      dim[1]
+    end
+  end
+
+  def initialize( source, sink, params, compiler)
     @source_filename = source
     @sink_filename = sink
     @params = params
@@ -83,30 +98,6 @@ class Article
     @children.size > 0
   end
 
-  def constrain_dims( tw, th, w, h)
-    if w * th >= h * tw
-      if w > tw
-        h = (h * tw) / w
-        w = tw
-      end
-    else
-      if h > th
-        w = (w * th) / h
-        h = th
-      end
-    end
-
-    return w, h
-  end
-
-  def create_directory( path)
-    path = File.dirname( path)
-    unless File.exist?( path)
-      create_directory( path)
-      Dir.mkdir( path)
-    end
-  end
-
   def date
     if @date.nil?
       return children[0].date if children?
@@ -151,7 +142,12 @@ class Article
       end
     end
 
-    {lineno:lineno, image:image_filename, caption:caption, width:info[1], height:info[2]}
+    Image.new( image_filename,
+               @compiler.sink_filename( image_filename),
+               caption,
+               info[1],
+               info[2],
+               lineno)
   end
 
   def error( lineno, msg)
@@ -219,7 +215,6 @@ class Article
 
   def icon
     return @icon if @icon
-    return nil unless index_images?
     return @images[0] if @images.size > 0
 
     children.each do |child|
@@ -253,7 +248,7 @@ class Article
     html.start_indexes
 
     if index_images?
-      index_using_images( parents, html)
+      index_using_images( to_index, html)
     else
       html.children( to_index)
     end
@@ -269,9 +264,8 @@ class Article
     get( 'INDEX') == 'image'
   end
 
-  def index_resource( html, page, image = nil)
-    dims = @compiler.dimensions( 'icon')
-    prepare_images(image, dims, :prepare_thumbnail) do |file, w, h, sizes|
+  def index_resource( html, page, image, dims)
+    image.prepare_images( dims, :prepare_thumbnail) do |file, w, h, sizes|
       html.add_index( file,
                       w, h,
                       sizes,
@@ -280,15 +274,26 @@ class Article
     end
   end
 
-  def index_using_images( parents, html)
-    if index_children? && (@children.size > 0)
-      children.each do |child|
-        index_resource( html, child, child.icon)
+  def index_using_images( to_index, html)
+    dims = @compiler.dimensions( 'icon')
+    scaled_dims = []
+    backstop = BackstopIcon.new( @compiler.sink_filename( "/resources/down_cyan.png"))
+
+    dims.each do |dim|
+      min_height = 20000
+
+      to_index.each do |child|
+        icon = child.icon ? child.icon : backstop
+        height = icon.scaled_height( dim)
+        min_height = height if height < min_height
       end
-    else
-      siblings( parents).select {|a| a.has_content?}.each do |sibling|
-        index_resource( html, sibling, sibling.icon) unless sibling == self
-      end
+
+      scaled_dims << [dim[0], min_height]
+    end
+
+    to_index.each do |child|
+      icon = child.icon ? child.icon : backstop
+      index_resource( html, child, icon, scaled_dims)
     end
 
     (0..7).each {html.add_index_dummy}
@@ -323,73 +328,19 @@ class Article
     words.join( "&nbsp;")
   end
 
-  def prepare_source_image( info, width, height)
-    w,h = constrain_dims( width, height, info[:width], info[:height])
-    file = info[:image]
-    imagefile = @compiler.sink_filename( file[0..-5] + "-#{width}-#{height}" + file[-4..-1])
-    @compiler.record( imagefile)
-
-    if not File.exists?( imagefile)
-      create_directory( imagefile)
-
-      if w < info[:width] or h < info[:height]
-        cmd = ["scripts/scale.csh", file, imagefile, w.to_s, h.to_s]
-        raise "Error scaling [#{file}]" if not system( cmd.join( " "))
-      else
-        FileUtils.cp( file, imagefile)
-      end
-    end
-
-    return imagefile, w, h
-  end
-
   def prepare_source_images( html, caption)
     html.small_no_indexes
     html.start_div( 'gallery t1')
 
     dims = @compiler.dimensions( 'image')
     @images.each do |image|
-      prepare_images( image, dims, :prepare_source_image) do |file, w, h, sizes|
-        html.image( file, w, h, image[:caption], sizes)
+      image.prepare_images( dims, :prepare_source_image) do |file, w, h, sizes|
+        html.image( file, w, h, image.caption, sizes)
       end
-      html.add_caption( image[:caption]) if caption && image[:caption]
+      html.add_caption( image.caption) if caption && image.caption
     end
 
     html.end_div
-  end
-
-  def prepare_thumbnail( info, width, height)
-    w,h = shave_thumbnail( width, height, info[:width], info[:height])
-    file = info[:image]
-    thumbfile = @compiler.sink_filename( file[0..-5] + "-#{width}-#{height}" + file[-4..-1])
-    @compiler.record( thumbfile)
-
-    if not File.exists?( thumbfile)
-      cmd = ["scripts/thumbnail.csh"]
-      cmd << file
-      cmd << thumbfile
-      [w,h,width,height].each {|i| cmd << i.to_s}
-      raise "Error scaling [#{info[:image]}]" if not system( cmd.join( " "))
-    end
-
-    return thumbfile, width, height
-  end
-
-  def prepare_images( info, dims, prepare)
-    backstop = @compiler.sink_filename( "/resources/down_cyan.png")
-    sizes = ''
-    (0...dims.size).each do |i|
-      sizes = sizes + " size#{i}"
-      if ((i+1) >= dims.size) || (dims[i][0] != dims[i+1][0]) || (dims[i][1] != dims[i+1][1])
-        if info
-          file, w, h = send( prepare, info, * dims[i])
-        else
-          file, w, h = backstop, * dims[i]
-        end
-        yield file, w, h, sizes
-        sizes = ''
-      end
-    end
   end
 
   def prettify( name)
@@ -421,19 +372,6 @@ class Article
 
   def set_title( title)
     @title = title
-  end
-
-  def shave_thumbnail( width, height, width0, height0)
-    if ((width0 * 1.0) / height0) > ((width * 1.0) / height)
-      # p [height0, width, height, height0 * (width * 1.0), height0 * (width * 1.0) / height]
-      w = (height0 * (width * 1.0) / height).to_i
-      x = (width0 - w) / 2
-      return x, 0
-    else
-      h = (width0 * (height * 1.0) / width).to_i
-      y = (height0 - h) / 2
-      return 0, y
-    end
   end
 
   def siblings( parents)
@@ -495,8 +433,8 @@ class Article
     dims = @compiler.dimensions( 'icon')
     @images.each_index do |i|
       next if i >= html.floats.size
-      prepare_images( @images[i], dims, :prepare_source_image) do |image, w, h, sizes|
-        html.add_float( image, w, h, sizes, @images[i][:caption], i)
+      @images[i].prepare_images( dims, :prepare_source_image) do |image, w, h, sizes|
+        html.add_float( image, w, h, sizes, @images[i].caption, i)
       end
     end
 
