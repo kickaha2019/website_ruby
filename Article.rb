@@ -33,7 +33,7 @@ class Article
     @seen_links = {}
     @content = []
     @children = []
-    @children_sorted = false
+    @children_sorted = true
     @images   = []
     @icon = nil
 
@@ -44,7 +44,12 @@ class Article
   end
 
   def add_child( article)
-    @children_sorted = false
+    if children? && (@children[0].class != article.class)
+      error( 0, 'Mixed children both links and articles')
+    end
+    unless article.is_a?( Link)
+      @children_sorted = false
+    end
     @children << article
   end
 
@@ -88,7 +93,7 @@ class Article
 
   def children
     if not @children_sorted
-      @children = sort( @children, get( "ORDER"))
+      @children = sort( @children)
       @children_sorted = true
     end
     @children
@@ -99,9 +104,6 @@ class Article
   end
 
   def date
-    if @date.nil?
-      return children[0].date if children?
-    end
     @date # ? @date : Time.gm( 1970, "Jan", 1)
   end
 
@@ -205,7 +207,7 @@ class Article
   def has_picture_page?
     return false if @images.size == 0
     return true if (@images.size >= 2) && (@content.size > 1)
-    return true if children.size > 0
+    return true if @children.size > 0
     false
   end
 
@@ -379,28 +381,34 @@ class Article
     parents[-1].children
   end
 
-  def sort( articles, order)
-    ascending = true
-    ascending, order = false, order[0...-1] if order[-1] == '-'
-    return articles if order == 'None'
+  def sort( articles)
+    articles.sort do |a1,a2|
+      t1 = a1.title
+      t2 = a2.title
 
-    articles.sort do |a,b|
-      a, b = b, a if not ascending
-
-      if order == "Date"
-        if a.date.nil? and b.date.nil?
-          a.title.downcase <=> b.title.downcase
-        elsif a.date.nil?
-          1
-        elsif b.date.nil?
-          -1
+      # Numbers on front of titles win out in sorting
+      if m1 = /^(\d+)(:|_|$)/.match( t1)
+        if m2 = /^(\d+)(:|_|$)/.match( t2)
+          m1[1].to_i <=> m2[1].to_i
         else
-          a.date <=> b.date
+          -1
         end
-      elsif order == "Person"
-        a.name.split("_").reverse.join( " ") <=> b.name.split("_").reverse.join( " ")
+      elsif m2 = /^(\d+)(\D|$)/.match( t2)
+        1
+
+      # Next try for dates
+      elsif a1.date
+        if a2.date
+          a1.date <=> a2.date
+        else
+          -1
+        end
+      elsif a2.date
+        1
+
+      # Lastly case insensitive sort on titles
       else
-        a.title.downcase <=> b.title.downcase
+        a1.title.downcase <=> a2.title.downcase
       end
     end
   end

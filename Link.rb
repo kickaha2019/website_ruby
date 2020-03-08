@@ -12,7 +12,7 @@ class Link
 		@lineno        = lineno
 		@link          = link
 		@title         = title
-    @date          = nil
+		@date          = nil
     @icon          = nil
     @sink_filename = nil
 	end
