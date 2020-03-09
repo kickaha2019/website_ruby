@@ -387,8 +387,8 @@ class Article
       t2 = a2.title
 
       # Numbers on front of titles win out in sorting
-      if m1 = /^(\d+)(:|_|$)/.match( t1)
-        if m2 = /^(\d+)(:|_|$)/.match( t2)
+      if m1 = /^(\d+)(\D|$)/.match( t1)
+        if m2 = /^(\d+)(\D|$)/.match( t2)
           m1[1].to_i <=> m2[1].to_i
         else
           -1

@@ -97,7 +97,11 @@ class Commands
 		
 		article.add_child( Link.new( article, lineno, * entry))
 	end
-	
+
+	def List( article, lineno, entry)
+		Table( article, lineno, entry, 'border list')
+  end
+
 	def PHP( article, lineno, entry)
 		article.set_php
 		if entry.size < 1
@@ -107,14 +111,14 @@ class Commands
 		end
 	end
 
-	def Table( article, lineno, entry)
-		article.add_content( TableStart.new)
-
+	def Table( article, lineno, entry, style = 'border table')
 		width = 1
+
 		entry_lines( entry, lineno) do |line, line_lineno|
 			w = line.split('|').size
 			width = w if w > width
 		end
+		article.add_content( TableStart.new( style))
 
 		entry_lines( entry, lineno) do |line, line_lineno|
 			article.add_content( TableRow.new( line, width))

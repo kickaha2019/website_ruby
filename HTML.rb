@@ -245,20 +245,25 @@ class HTML
 
   def link( defn)
     if @local_links[defn]
-      defn = @local_links[defn] + ' ' + defn
+      ref, text = @local_links[defn], defn
     elsif @compiler.link( defn)
-      defn = @compiler.link( defn) + ' ' + defn
-    end
+      ref, text = @compiler.link( defn), defn
+    else
+      els = defn.split(' ')
+      if els.size < 2
+        @error = "Bad link: #{defn}"
+        return ''
+      end
 
-    defn = defn.split(' ')
-    if defn.size < 2
-      @error = "Bad link: #{defn}"
-      return ''
-    end
+      ref, text = els[0], els[1..-1].join(' ')
+      ref = ref + '.php' if /\.rb$/ =~ ref
+      @local_links[text] = ref
 
-    ref, text = defn[0], defn[1..-1].join(' ')
-    ref = ref + '.php' if /\.rb$/ =~ ref
-    @local_links[text] = ref
+      unless (/\.(html|php|zip)$/ =~ ref) || (/^(\/|http(s|):|mailto:)/ =~ ref)
+        @error = "Bad link: #{defn}"
+        return ''
+      end
+    end
 
     if /^http/ =~ ref
       target = (/maps\.apple\.com/ =~ ref) ? '' : 'TARGET="_blank" '
