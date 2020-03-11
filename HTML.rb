@@ -110,6 +110,10 @@ class HTML
     @output << format_date( time) + "</DIV>"
   end
 
+  def dimensions( key)
+    @compiler.dimensions( key)
+  end
+
   def disable_float( float)
     write_css( ".f#{float} {display: none}")
   end
@@ -256,16 +260,20 @@ class HTML
       end
 
       ref, text = els[0], els[1..-1].join(' ')
-      ref = ref + '.php' if /\.rb$/ =~ ref
-      @local_links[text] = ref
-
-      unless (/\.(html|php|zip)$/ =~ ref) || (/^(\/|http(s|):|mailto:)/ =~ ref)
-        @error = "Bad link: #{defn}"
-        return ''
+      unless /^(http:|https:|mailto:|\/)/ =~ ref
+        ref, error = @compiler.find_article( ref)
+        if error
+          @error = "Bad link: #{defn} - #{error}"
+          return ''
+        end
       end
+      @local_links[text] = ref
     end
 
-    if /^http/ =~ ref
+    if ref.is_a?( Article)
+      rp = relative_path( @path, ref.sink_filename)
+      "<A HREF=\"#{rp}\">#{check(text)}</A>"
+    elsif /^http/ =~ ref
       target = (/maps\.apple\.com/ =~ ref) ? '' : 'TARGET="_blank" '
       "<A HREF=\"#{ref}\" #{target}REL=\"nofollow\">#{check(text)}</A>"
     elsif /^\// =~ ref
@@ -335,6 +343,10 @@ class HTML
 
   def set_max_floats( n)
     @max_floats = n
+  end
+
+  def sink_filename( path)
+    @compiler.sink_filename( path)
   end
 
   def small_no_indexes
@@ -411,6 +423,10 @@ class HTML
       end
     end
     @output << "</DIV>"
+  end
+
+  def title
+    @compiler.title
   end
 
   def write( line)

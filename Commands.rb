@@ -13,19 +13,19 @@ class Commands
 	@@default_date = Time.gm( 1970, "Jan", 1)
 	@@gallery_index = 0
 
-	def Anchor( article, lineno, entry)
+	def Anchor( compiler, article, lineno, entry)
 		if entry.size < 1
 			article.error( lineno, "No entries for anchor")
 		else
 			entry.each do |link|
-				article.validate_anchor( lineno, link)
+				article.validate_anchor( compiler, lineno, link)
 			end
 		end
 
 		article.add_content( Anchor.new)
 	end
 
-	def Code( article, lineno, entry)
+	def Code( compiler, article, lineno, entry)
 		if entry.size < 1
 			article.error( lineno, "No lines for code")
 		else
@@ -33,7 +33,7 @@ class Commands
 		end
 	end
 	
-	def Date( article, lineno, entry)
+	def Date( compiler, article, lineno, entry)
 		if entry.size != 1
 			article.error( lineno, "Dates should have one line in the entry")
 			return
@@ -45,13 +45,13 @@ class Commands
 		article.add_content( Date.new( t))
 	end
 	
-	def Gallery( article, lineno, entry)
+	def Gallery( compiler, article, lineno, entry)
 		entry_blocks( entry, lineno) do |block, block_lineno|
-			add_image( article, block_lineno, block)
+			add_image( compiler, article, block_lineno, block)
 		end
 	end
 	
-	def Heading( article, lineno, entry)
+	def Heading( compiler, article, lineno, entry)
 		if entry.size != 1
 			article.error( lineno, "Heading takes one line")
 		else
@@ -59,7 +59,7 @@ class Commands
 		end
 	end
 
-	def HTML( article, lineno, entry)
+	def HTML( compiler, article, lineno, entry)
 		if entry.size < 1
 			article.error( lineno, "No lines for HTML")
 		else
@@ -67,29 +67,29 @@ class Commands
 		end
 	end
 	
-	def Icon( article, lineno, entry)
+	def Icon( compiler, article, lineno, entry)
 		if entry.size != 1
 			article.error( lineno, "Icon takes one line for image filename")
 		else
 			path = entry[0]
 			if /^\// =~ path
-				article.set_icon( lineno, path)
+				article.set_icon( compiler, lineno, path)
 			else
 				path = abs_filename( article.source_filename, entry[0])
-				article.set_icon( lineno, path)
+				article.set_icon( compiler, lineno, path)
 			end
 		end
 	end
 
-	def Image( article, lineno, entry)
-		Images( article, lineno, entry)
+	def Image( compiler, article, lineno, entry)
+		Images( compiler, article, lineno, entry)
 	end
 
-	def Images( article, lineno, entry)
-		Gallery( article, lineno, entry)
+	def Images( compiler, article, lineno, entry)
+		Gallery( compiler, article, lineno, entry)
 	end
 
-	def Link( article, lineno, entry)
+	def Link( compiler, article, lineno, entry)
 		if (entry.size < 1) || (entry.size > 2)
 			article.error( lineno, "Links should have one or two lines in the entry")
 			return
@@ -98,11 +98,11 @@ class Commands
 		article.add_child( Link.new( article, lineno, * entry))
 	end
 
-	def List( article, lineno, entry)
-		Table( article, lineno, entry, 'border list')
+	def List( compiler, article, lineno, entry)
+		Table( compiler, article, lineno, entry, 'border list')
   end
 
-	def PHP( article, lineno, entry)
+	def PHP( compiler, article, lineno, entry)
 		article.set_php
 		if entry.size < 1
 			article.error( lineno, "No lines for code")
@@ -111,7 +111,7 @@ class Commands
 		end
 	end
 
-	def Table( article, lineno, entry, style = 'border table')
+	def Table( compiler, article, lineno, entry, style = 'border table')
 		width = 1
 
 		entry_lines( entry, lineno) do |line, line_lineno|
@@ -127,7 +127,7 @@ class Commands
 		article.add_content( TableEnd.new)
 	end
 	
-	def Text( article, lineno, entry)
+	def Text( compiler, article, lineno, entry)
 		if entry.size < 1
 			article.error( lineno, "No lines for text")
 		else
@@ -135,7 +135,7 @@ class Commands
 		end
 	end
 	
-	def Title( article, lineno, entry)
+	def Title( compiler, article, lineno, entry)
 		if entry.size != 1
 			article.error( lineno, "Title definition should be one line long")
 		elsif /[\["\|&<>]/ =~ entry[0]
@@ -155,7 +155,7 @@ class Commands
 		path + '/' + filename
 	end
 	
-	def add_image( article, lineno, entry)
+	def add_image( compiler, article, lineno, entry)
 		if entry.size != 2
 			article.error( lineno, "Bad image declaration")
 			return
@@ -172,7 +172,7 @@ class Commands
 			return
 		end
 
-		article.add_image( lineno, path, entry[1])
+		article.add_image( compiler, lineno, path, entry[1])
 	end
 	
 	def convert_date( article, lineno, text)

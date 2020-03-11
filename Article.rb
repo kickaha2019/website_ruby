@@ -25,17 +25,16 @@ class Article
     end
   end
 
-  def initialize( source, sink, params, compiler)
+  def initialize( source, sink)
     @source_filename = source
-    @sink_filename = sink
-    @params = params
-    @compiler = compiler
-    @seen_links = {}
-    @content = []
-    @children = []
+    @sink_filename   = sink
+    @seen_links      = {}
+    @content         = []
+    @children        = []
     @children_sorted = true
-    @images   = []
-    @icon = nil
+    @images          = []
+    @icon            = nil
+    @errors          = []
 
     add_content( ContentStart.new)
 
@@ -57,8 +56,8 @@ class Article
     @content << block
   end
 
-  def add_image( lineno, image, caption)
-    @images << describe_image( lineno, image, caption)
+  def add_image( compiler, lineno, image, caption)
+    @images << describe_image( compiler, lineno, image, caption)
   end
 
   def add_text_line( lineno, line, sep, lines)
@@ -107,14 +106,14 @@ class Article
     @date # ? @date : Time.gm( 1970, "Jan", 1)
   end
 
-  def describe_image( lineno, image_filename, caption)
+  def describe_image( compiler, lineno, image_filename, caption)
     if /[\["\|<>]/ =~ caption
       error( lineno, "Image caption containing special character: " + caption)
       caption = nil
     end
 
     # caption = "#{source_filename}:#{lineno}" unless caption
-    fileinfo = @compiler.fileinfo( image_filename)
+    fileinfo = compiler.fileinfo( image_filename)
     info = nil
     ts = File.mtime( image_filename).to_i
 
@@ -131,7 +130,7 @@ class Article
       end
 
       to_delete = []
-      sink_dir = File.dirname( @compiler.sink_filename( image_filename))
+      sink_dir = File.dirname( compiler.sink_filename( image_filename))
 
       if File.directory?( sink_dir)
         Dir.entries( sink_dir).each do |f|
@@ -145,7 +144,7 @@ class Article
     end
 
     Image.new( image_filename,
-               @compiler.sink_filename( image_filename),
+               compiler.sink_filename( image_filename),
                caption,
                info[1],
                info[2],
@@ -153,12 +152,7 @@ class Article
   end
 
   def error( lineno, msg)
-    @compiler.error( @source_filename, lineno, msg)
-  end
-
-  def get( name)
-    raise "Parameter [#{name}] not set" if @params[name].nil?
-    @params[ name]
+    @errors << [@source_filename, lineno, msg]
   end
 
   def get_image_dims( lineno, filename)
@@ -234,7 +228,7 @@ class Article
       wrap = false unless item.wrap?
     end
 
-    if index_children? && (@children.size > 0)
+    if @children.size > 0
       to_index = children
       error( 0, 'Some content does not wrap but has children') unless wrap
     else
@@ -249,7 +243,7 @@ class Article
 
     html.start_indexes
 
-    if index_images?
+    if index_images?( to_index)
       index_using_images( to_index, html)
     else
       html.children( to_index)
@@ -258,12 +252,18 @@ class Article
     html.end_indexes
   end
 
-  def index_children?
-    get( 'INDEX_CHILDREN').downcase != 'false'
-  end
+  def index_images?( articles)
+    with, without = 0, 0
 
-  def index_images?
-    get( 'INDEX') == 'image'
+    articles.each do |article|
+      if article.icon
+        with += 1
+      else
+        without += 1
+      end
+    end
+
+    with > without
   end
 
   def index_resource( html, page, image, dims)
@@ -277,9 +277,9 @@ class Article
   end
 
   def index_using_images( to_index, html)
-    dims = @compiler.dimensions( 'icon')
+    dims = html.dimensions( 'icon')
     scaled_dims = []
-    backstop = BackstopIcon.new( @compiler.sink_filename( "/resources/down_cyan.png"))
+    backstop = BackstopIcon.new( html.sink_filename( "/resources/down_cyan.png"))
 
     dims.each do |dim|
       min_height = 20000
@@ -314,7 +314,7 @@ class Article
     m[1] + '_pictures.html'
   end
 
-  def prepare( root_article)
+  def prepare( compiler)
   end
 
   def prepare_name_for_index( text)
@@ -334,7 +334,7 @@ class Article
     html.small_no_indexes
     html.start_div( 'gallery t1')
 
-    dims = @compiler.dimensions( 'image')
+    dims = html.dimensions( 'image')
     @images.each do |image|
       image.prepare_images( dims, :prepare_source_image) do |file, w, h, sizes|
         html.image( file, w, h, image.caption, sizes)
@@ -349,16 +349,20 @@ class Article
     HTML.prettify( name)
   end
 
+  def report_errors( compiler)
+    @errors.each {|err| compiler.error( * err)}
+  end
+
   def set_date( t)
     @date = t if @date.nil?
   end
 
-  def set_icon( lineno, path)
+  def set_icon( compiler, lineno, path)
     if @icon.nil?
       if not File.exists?( path)
         error( 0, "Icon #{path} not found")
       else
-        @icon = describe_image( lineno, path, nil)
+        @icon = describe_image( compiler, lineno, path, nil)
       end
     end
   end
@@ -422,7 +426,7 @@ class Article
   end
 
   def to_pictures( parents, html)
-    html.start_page( get("TITLE"))
+    html.start_page( html.title)
     html.breadcrumbs( parents + [self], 'Pictures', false)
     html.start_div( 'payload content')
     index( parents, html, false)
@@ -432,13 +436,13 @@ class Article
   end
 
   def to_html( parents, html)
-    html.start_page( get("TITLE"))
+    html.start_page( html.title)
 
     @content.each do |item|
       item.process( self, parents, html)
     end
 
-    dims = @compiler.dimensions( 'icon')
+    dims = html.dimensions( 'icon')
     @images.each_index do |i|
       next if i >= html.floats.size
       @images[i].prepare_images( dims, :prepare_source_image) do |image, w, h, sizes|
@@ -453,8 +457,8 @@ class Article
     html.end_page
   end
 
-  def validate_anchor( lineno, link)
-    if ! @compiler.is_anchor_defined?(link)
+  def validate_anchor( compiler, lineno, link)
+    if ! compiler.is_anchor_defined?(link)
       error( lineno, "Unknown anchor link: #{link}")
     end
   end

@@ -28,6 +28,7 @@ load "HTML.rb"
 load "Link.rb"
 
 class Compiler
+  attr_reader :title
 
   class Bound
     def initialize( defn)
@@ -82,17 +83,17 @@ class Compiler
     find_anchors('')
 
     # Parse all the articles recursively
-    params = load_parameters( {}, "")
-    root_article = parse( nil, "", {})
+    @title = load_parameters( "")['TITLE']
+    @articles = parse( nil, "")
 
     # Sync the resource files
     sync_resources( @source + '/resources', @sink + '/resources', /\.(png|css|jpg)$/)
 
     # Prepare the articles now all articles parsed
-    prepare( root_article, root_article)
+    prepare( @articles)
 
     # Regenerate the HTML files
-    regenerate( [], root_article)
+    regenerate( [], @articles)
 
     # Delete files not regenerated
     tidy_up( @sink)
@@ -102,6 +103,7 @@ class Compiler
       error( name, nil, "Anchor not used") unless info[:used]
     end
 
+    report_errors( @articles)
     puts "*** #{@errors} Errors in compilation" if @errors > 0
   end
 
@@ -150,7 +152,7 @@ class Compiler
   end
 
   # Parse the articles
-  def parse( parent, path, params)
+  def parse( parent, path)
 
     # Skip special directories
     return if ['/resources', '/templates', '/fileinfo'].include?( path)
@@ -178,13 +180,10 @@ class Compiler
 
     source = list_dir( @source + path)
 
-    # Load any new parameters
-    params = load_parameters( params, path)
-
     # Generate article for the directory
     source_file = @source + path + "/index.txt"
     sink_file = @sink + path + "/index.html"
-    dir_article = Article.new( source_file, sink_file, params, self)
+    dir_article = Article.new( source_file, sink_file)
     if File.exist?( source_file)
       parse_defn( path, "index.txt", dir_article)
     end
@@ -205,10 +204,10 @@ class Compiler
 
       if File.directory?( @source + path1)
         Dir.mkdir( @sink + path1) if not File.exists?( @sink + path1)
-        parse( dir_article, path1, params)
+        parse( dir_article, path1)
       elsif m = /^(.*)\.txt$/.match( file)
         if file != 'index.txt'
-          child = Article.new( @source + path1, @sink + path + "/#{m[1]}.html", params, self)
+          child = Article.new( @source + path1, @sink + path + "/#{m[1]}.html")
           dir_article.add_child( child)
           parse_defn( path, file, child)
         end
@@ -292,19 +291,19 @@ class Compiler
     end
 
     begin
-      @commands.send( verb.to_sym, article, lineno, entry)
+      @commands.send( verb.to_sym, self, article, lineno, entry)
       true
-    rescue NoMethodError => bang
-      article.error( lineno, 'Unsupported directive: ' + verb)
-      false
+    # rescue NoMethodError => bang
+    #   article.error( lineno, 'Unsupported directive: ' + verb)
+    #   false
     end
   end
 
-  def prepare( root_article, article)
+  def prepare( article)
     debug_hook( article)
-    article.prepare( root_article)
+    article.prepare( self)
     article.children.each do |child|
-      prepare( root_article, child)
+      prepare( child)
     end
   end
 
@@ -375,6 +374,13 @@ class Compiler
 
     article.children.each do |child|
       regenerate( parents + [article], child) if child.is_a?( Article)
+    end
+  end
+
+  def report_errors( article)
+    article.report_errors( self)
+    article.children.each do |child|
+      report_errors( child) if child.is_a?( Article)
     end
   end
 
@@ -455,20 +461,18 @@ class Compiler
     files
   end
 
-  def load_parameters( params, path)
+  def load_parameters( path)
     if File.exists?( @source + path + "/parameters.txt")
-      params1 = {}
-      params.each_pair {|k,v| params1[k] = v}
+      params = {}
       IO.readlines( @source + path + "/parameters.txt").each do |line|
         if m = /^(.*)=(.*)$/.match( line.chomp)
-          if m[1].strip == 'STYLESHEET' and params1[ 'STYLESHEET']
-            params1[ 'STYLESHEET'] = params1[ 'STYLESHEET'] + "\t" + m[2].strip
+          if m[1].strip == 'STYLESHEET' and params[ 'STYLESHEET']
+            params[ 'STYLESHEET'] = params[ 'STYLESHEET'] + "\t" + m[2].strip
           else
-            params1[ m[1].strip] = m[2].strip
+            params[ m[1].strip] = m[2].strip
           end
         end
       end
-      params = params1
     end
     params
   end
@@ -521,6 +525,27 @@ class Compiler
 
   def dimensions( key)
     @dimensions[key]
+  end
+
+  def find_article( path)
+    re = Regexp.new( "(^|/)#{path}(\.txt|/index.txt)")
+    matches = []
+    match_article_filename( @articles, re, matches)
+
+    if matches.size < 1
+      return nil, "Link not found"
+    elsif matches.size > 1
+      return nil, "Ambiguous link"
+    else
+      return matches[0], nil
+    end
+  end
+
+  def match_article_filename( article, re, matches)
+    matches << article if re =~ article.source_filename
+    article.children.each do |child|
+      match_article_filename( child, re, matches) if child.is_a?( Article)
+    end
   end
 
   def tidy_up( path)
