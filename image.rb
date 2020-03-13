@@ -49,7 +49,7 @@ class Image
   def prepare_source_image( width, height)
     w,h = constrain_dims( width, height, @width, @height)
     m = /^(.*)(\.\w*)$/.match( @sink)
-    imagefile = m[1] + "-#{width}-#{height}" + m[2]
+    imagefile = m[1] + "-#{w}-#{h}" + m[2]
 
     if not File.exists?( imagefile)
       create_directory( imagefile)
