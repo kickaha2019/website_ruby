@@ -14,9 +14,13 @@ class ContentStart
       html.start_div( 'story t1')
     end
 
-    if (article.images.size > 0) && (! article.has_picture_page?)
-      article.prepare_source_images( html, (article.images.size > 1) || (article.content.size == 1))
+    if (article.images.size == 1) && (! article.has_picture_page?)
+      article.prepare_source_images( html, false)
     end
+  end
+
+  def text_chars
+    0
   end
 
   def wrap?

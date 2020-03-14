@@ -3,6 +3,10 @@ class Anchor
     html.anchor
   end
 
+  def text_chars
+    0
+  end
+
   def wrap?
     true
   end

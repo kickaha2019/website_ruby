@@ -9,6 +9,10 @@ class Code
     end
   end
 
+  def text_chars
+    @entry.size
+  end
+
   def wrap?
     false
   end

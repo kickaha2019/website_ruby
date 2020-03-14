@@ -7,6 +7,10 @@ class TableStart
     html.start_table( @style)
   end
 
+  def text_chars
+    0
+  end
+
   def wrap?
     false
   end

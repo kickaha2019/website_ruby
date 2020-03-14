@@ -20,6 +20,10 @@ class TableRow
     html.end_table_row
   end
 
+  def text_chars
+    @row.size
+  end
+
   def wrap?
     false
   end

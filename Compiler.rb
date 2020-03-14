@@ -354,14 +354,14 @@ class Compiler
   def regenerate( parents, article)
     debug_hook( article)
 
-    if article.has_content? || (! article.has_picture_page?)
+#    if article.has_content? || (! article.has_picture_page?)
       html = HTML.new( self, @sink, article.sink_filename)
       html.start
       article.to_html( parents, html)
       html.finish do |error|
         article.error( 0, error)
       end
-    end
+#    end
 
     if article.has_picture_page?
       html = HTML.new( self, @sink, article.picture_sink_filename)

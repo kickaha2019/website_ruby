@@ -9,6 +9,10 @@ class HTMLBlock
     end
   end
 
+  def text_chars
+    10000
+  end
+
   def wrap?
     false
   end

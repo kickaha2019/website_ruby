@@ -9,6 +9,12 @@ class Text
     end
   end
 
+  def text_chars
+    count = 0
+    @entry.each {|item| count += item.size}
+    count
+  end
+
   def wrap?
     true
   end

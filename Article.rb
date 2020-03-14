@@ -194,19 +194,17 @@ class Article
     end
   end
 
-  def has_content?
-    @content.size > 0
+  def has_much_content?
+    text_chars = 0
+    @content.each {|item| text_chars += item.text_chars}
+    text_chars > 80
   end
 
   def has_picture_page?
     return false if @images.size == 0
-    return true if (@images.size >= 2) && (@content.size > 1)
+    return true if (@images.size >= 2) && has_much_content?
     return true if @children.size > 0
     false
-  end
-
-  def has_text?
-    @has_text
   end
 
   def icon
@@ -232,7 +230,7 @@ class Article
       to_index = children
       error( 0, 'Some content does not wrap but has children') unless wrap
     else
-      to_index = siblings( parents).select {|a| a.has_content? && (a != self)}
+      to_index = siblings( parents).select {|a| a != self}
     end
 
     if to_index.size == 0
@@ -330,7 +328,7 @@ class Article
     words.join( "&nbsp;")
   end
 
-  def prepare_source_images( html, caption)
+  def prepare_source_images( html, do_caption)
     html.small_no_indexes
     html.start_div( 'gallery t1')
 
@@ -339,7 +337,7 @@ class Article
       image.prepare_images( dims, :prepare_source_image) do |file, w, h, sizes|
         html.image( file, w, h, image.caption, sizes)
       end
-      html.add_caption( image.caption) if caption && image.caption
+      html.add_caption( image.caption) if do_caption && image.caption
     end
 
     html.end_div
@@ -440,6 +438,10 @@ class Article
 
     @content.each do |item|
       item.process( self, parents, html)
+    end
+
+    if (@images.size > 1) && (! has_picture_page?)
+      prepare_source_images( html, true)
     end
 
     dims = html.dimensions( 'icon')
