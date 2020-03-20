@@ -16,7 +16,7 @@ class Article
       super( nil, sink, nil, nil, nil, 0)
     end
 
-    def prepare_thumbnail( width, height)
+    def prepare_thumbnail( width, height, bw)
       return @sink, width, height
     end
 
@@ -230,7 +230,7 @@ class Article
       to_index = children
       error( 0, 'Some content does not wrap but has children') unless wrap
     else
-      to_index = siblings( parents).select {|a| a != self}
+      to_index = siblings( parents) # .select {|a| a != self}
     end
 
     if to_index.size == 0
@@ -244,7 +244,7 @@ class Article
     if index_images?( to_index)
       index_using_images( to_index, html)
     else
-      html.children( to_index)
+      html.children( self, to_index)
     end
 
     html.end_indexes
@@ -265,11 +265,11 @@ class Article
   end
 
   def index_resource( html, page, image, dims)
-    image.prepare_images( dims, :prepare_thumbnail) do |file, w, h, sizes|
+    image.prepare_images( dims, :prepare_thumbnail, page == self) do |file, w, h, sizes|
       html.add_index( file,
                       w, h,
                       sizes,
-                      page.sink_filename,
+                      (page == self) ? nil : page.sink_filename,
                       prettify( page.title))
     end
   end
@@ -278,6 +278,7 @@ class Article
     dims = html.dimensions( 'icon')
     scaled_dims = []
     backstop = BackstopIcon.new( html.sink_filename( "/resources/down_cyan.png"))
+    backstop_bw = BackstopIcon.new( html.sink_filename( "/resources/down_bw.png"))
 
     dims.each do |dim|
       min_height = 20000
@@ -292,7 +293,7 @@ class Article
     end
 
     to_index.each do |child|
-      icon = child.icon ? child.icon : backstop
+      icon = child.icon ? child.icon : ((child == self) ? backstop_bw : backstop)
       index_resource( html, child, icon, scaled_dims)
     end
 

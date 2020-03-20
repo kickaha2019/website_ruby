@@ -5,17 +5,8 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Article.rb" beforeDir="false" afterPath="$PROJECT_DIR$/Article.rb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Compiler.rb" beforeDir="false" afterPath="$PROJECT_DIR$/Compiler.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/anchor.rb" beforeDir="false" afterPath="$PROJECT_DIR$/anchor.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/code.rb" beforeDir="false" afterPath="$PROJECT_DIR$/code.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/content_start.rb" beforeDir="false" afterPath="$PROJECT_DIR$/content_start.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/date.rb" beforeDir="false" afterPath="$PROJECT_DIR$/date.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/heading.rb" beforeDir="false" afterPath="$PROJECT_DIR$/heading.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/html_block.rb" beforeDir="false" afterPath="$PROJECT_DIR$/html_block.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/php.rb" beforeDir="false" afterPath="$PROJECT_DIR$/php.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/table_end.rb" beforeDir="false" afterPath="$PROJECT_DIR$/table_end.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/table_row.rb" beforeDir="false" afterPath="$PROJECT_DIR$/table_row.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/table_start.rb" beforeDir="false" afterPath="$PROJECT_DIR$/table_start.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/text.rb" beforeDir="false" afterPath="$PROJECT_DIR$/text.rb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/HTML.rb" beforeDir="false" afterPath="$PROJECT_DIR$/HTML.rb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/image.rb" beforeDir="false" afterPath="$PROJECT_DIR$/image.rb" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -41,8 +32,8 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Erb File" />
-        <option value="Ruby File" />
         <option value="Ruby Class" />
+        <option value="Ruby File" />
       </list>
     </option>
   </component>
@@ -425,6 +416,11 @@
       <workItem from="1584128218577" duration="1089000" />
       <workItem from="1584135477376" duration="753000" />
       <workItem from="1584223989674" duration="2377000" />
+      <workItem from="1584263581859" duration="2223000" />
+      <workItem from="1584276390144" duration="952000" />
+      <workItem from="1584481263387" duration="601000" />
+      <workItem from="1584562552984" duration="1718000" />
+      <workItem from="1584652601255" duration="2440000" />
     </task>
     <servers />
   </component>
@@ -496,11 +492,12 @@
     <SUITE FILE_PATH="coverage/ruby@Check_links.rcov" NAME="Check links Coverage Results" MODIFIED="1576966397737" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Add_gallery.rcov" NAME="Add gallery Coverage Results" MODIFIED="1579817652669" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/../Articles/Diary/2020/New_Zealand/2 Godzilla Hotel" MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Overlay_editor.rcov" NAME="Overlay editor Coverage Results" MODIFIED="1561805039803" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
-    <SUITE FILE_PATH="coverage/ruby@Revamp_website.rcov" NAME="Revamp website Coverage Results" MODIFIED="1584226308581" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." MODULE_NAME="ruby" />
+    <SUITE FILE_PATH="coverage/ruby@Revamp_website.rcov" NAME="Revamp website Coverage Results" MODIFIED="1584654553484" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Find_links.rcov" NAME="Find links Coverage Results" MODIFIED="1580854552539" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Validate_reachability.rcov" NAME="Validate reachability Coverage Results" MODIFIED="1583492917547" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Check_golden_files.rcov" NAME="Check golden files Coverage Results" MODIFIED="1583609623359" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Build_website.rcov" NAME="Build website Coverage Results" MODIFIED="1582927283235" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." MODULE_NAME="ruby" />
+    <SUITE FILE_PATH="coverage/ruby@temp.rcov" NAME="temp Coverage Results" MODIFIED="1584277278663" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
   </component>
   <component name="hg4idea.settings">
     <option name="CHECK_INCOMING_OUTGOING" value="true" />

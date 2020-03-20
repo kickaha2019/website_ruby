@@ -211,21 +211,21 @@ class Compiler
           dir_article.add_child( child)
           parse_defn( path, file, child)
         end
-      elsif /\.rb$/ =~ file
-        text = ['<?php',
-                'header("Content-Type: application/force-download");',
-                'header("Content-Disposition: attachment; filename=\\"' + file + '\\";")',
-                '?>']
-        readlines( path, file, self) do |lineno, line|
-          text << line
-        end
-        html = HTML.new( self, @sink, @sink + path + '/' + file + '.php')
-        html.start
-        html.html( text)
-        html.finish do |error|
-          error( file, 0, error)
-        end
-      elsif /\.(JPG|jpg|png|zip)$/ =~ file
+      # elsif /\.rb$/ =~ file
+      #   text = ['<?php',
+      #           'header("Content-Type: application/force-download");',
+      #           'header("Content-Disposition: attachment; filename=\\"' + file + '\\";")',
+      #           '?>']
+      #   readlines( path, file, self) do |lineno, line|
+      #     text << line
+      #   end
+      #   html = HTML.new( self, @sink, @sink + path + '/' + file + '.php')
+      #   html.start
+      #   html.html( text)
+      #   html.finish do |error|
+      #     error( file, 0, error)
+      #   end
+      elsif /\.(JPG|jpg|png|zip|rb)$/ =~ file
       else
         raise "Unhandled file: #{path1}"
       end

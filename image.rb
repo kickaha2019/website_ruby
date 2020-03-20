@@ -34,12 +34,12 @@ class Image
     end
   end
 
-  def prepare_images( dims, prepare)
+  def prepare_images( dims, prepare, * args)
     sizes = ''
     (0...dims.size).each do |i|
       sizes = sizes + " size#{i}"
       if ((i+1) >= dims.size) || (dims[i][0] != dims[i+1][0]) || (dims[i][1] != dims[i+1][1])
-        file, w, h = send( prepare, * dims[i])
+        file, w, h = send( prepare, * dims[i], * args)
         yield file, w, h, sizes
         sizes = ''
       end
@@ -65,17 +65,17 @@ class Image
     return imagefile, w, h
   end
 
-  def prepare_thumbnail( width, height)
+  def prepare_thumbnail( width, height, bw)
     w,h = shave_thumbnail( width, height, @width, @height)
     m = /^(.*)(\.\w*)$/.match( @sink)
-    thumbfile = m[1] + "-#{width}-#{height}" + m[2]
+    thumbfile = m[1] + "-#{width}-#{height}" + (bw ? '_bw' : '') + m[2]
 
     if not File.exists?( thumbfile)
-      cmd = ["scripts/thumbnail.csh"]
+      cmd = ["scripts/thumbnail#{bw ? '_bw' : ''}.csh"]
       cmd << @source
       cmd << thumbfile
       [w,h,width,height].each {|i| cmd << i.to_s}
-      raise "Error scaling [#{info[:image]}]" if not system( cmd.join( " "))
+      raise "Error scaling [#{@source}]" if not system( cmd.join( " "))
     end
 
     return thumbfile, width, height

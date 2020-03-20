@@ -32,14 +32,18 @@ class HTML
   end
 
   def add_index( img, w, h, sizes, target, alt_text)
-    @output << "<A CLASS=\"index t0 #{sizes}\" HREF=\"#{relative_path( @path, target)}\">"
+    @output << "<A CLASS=\"index t0 #{sizes}\" HREF=\"#{relative_path( @path, target)}\">" if target
+    start_div( "index t0 #{sizes}") unless target
     start_div
     image( img, w, h, alt_text)
     end_div
     start_div
+    @output << '<span>' unless target
     write( alt_text)
+    @output << '</span>' unless target
     end_div
-    @output << "</A>"
+    end_div unless target
+    @output << "</A>" if target
   end
 
   def add_index_dummy
@@ -86,12 +90,18 @@ class HTML
     text
   end
 
-  def children( articles)
+  def children( parent, articles)
     articles.each do |article|
-      start_div( 'index_text t0')
-      rp = relative_path( @path, article.sink_filename)
-      @output << " &raquo; <A HREF=\"#{rp}\">#{HTML.prettify( article.title)}</A>"
-      @output << "</DIV>"
+      if parent == article
+        start_div( 'index_text t0')
+        @output << "<span> &raquo; #{HTML.prettify( article.title)}</span>"
+        @output << "</DIV>"
+      else
+        start_div( 'index_text t0')
+        rp = relative_path( @path, article.sink_filename)
+        @output << " &raquo; <A HREF=\"#{rp}\">#{HTML.prettify( article.title)}</A>"
+        @output << "</DIV>"
+      end
     end
   end
 
