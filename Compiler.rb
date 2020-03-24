@@ -157,22 +157,22 @@ class Compiler
     # Skip special directories
     return if ['/resources', '/templates', '/fileinfo'].include?( path)
 
-    # Do templating for any YAML files
+    # Do templating for any YAML files with a template attribute
     Dir.entries( @source+path).each do |file|
       path1 = path + "/" + file
       if m = /^(.*)\.yaml$/.match( file)
-        if (file != 'links.yaml') && (file != 'dimensions.yaml')
-          File.open( @source + path + '/' + m[1] + '.txt', 'w') do |io|
-            begin
-              defn = YAML.load( IO.read( @source + path1))
-              defn['links']   = get_local_links( @source+path)
-              defn['anchors'] = @anchors
-              erb = ERB.new( @templates[defn['template']])
-              io.print erb.result( Bound.new( defn).get_binding)
-            rescue
-              puts "*** Error templating #{path1}"
-              raise
-            end
+        defn = YAML.load( IO.read( @source + path1))
+        next unless defn['template']
+
+        File.open( @source + path + '/' + m[1] + '.txt', 'w') do |io|
+          begin
+            defn['links']   = get_local_links( @source+path)
+            defn['anchors'] = @anchors
+            erb = ERB.new( @templates[defn['template']])
+            io.print erb.result( Bound.new( defn).get_binding)
+          rescue
+            puts "*** Error templating #{path1}"
+            raise
           end
         end
       end
@@ -180,14 +180,17 @@ class Compiler
 
     source = list_dir( @source + path)
 
-    # Generate article for the directory
-    source_file = @source + path + "/index.txt"
-    sink_file = @sink + path + "/index.html"
-    dir_article = Article.new( source_file, sink_file)
-    if File.exist?( source_file)
-      parse_defn( path, "index.txt", dir_article)
-    end
+    # Article for the directory
+    dir_article = Article.new( @source + path + '/index', @sink + path + '/index.html')
     parent.add_child( dir_article) if parent
+
+    # Hash of articles in this directory
+    dir_articles = Hash.new do |h,k|
+      a = Article.new( @source + path + '/' + k, @sink + path + '/' + k + '.html')
+      dir_article.add_child( a)
+      h[k] = a
+    end
+    dir_articles['index'] = dir_article
 
     # Delete any .tmp files in current directory
     source.each do |file|
@@ -199,32 +202,20 @@ class Compiler
     # Loop over source files - skip image files and other specials
     source.each do |file|
       next if ['resources', 'templates', 'fileinfo'].include?( file)
-
       path1 = path + "/" + file
 
       if File.directory?( @source + path1)
         Dir.mkdir( @sink + path1) if not File.exists?( @sink + path1)
         parse( dir_article, path1)
       elsif m = /^(.*)\.txt$/.match( file)
-        if file != 'index.txt'
-          child = Article.new( @source + path1, @sink + path + "/#{m[1]}.html")
-          dir_article.add_child( child)
-          parse_defn( path, file, child)
-        end
-      # elsif /\.rb$/ =~ file
-      #   text = ['<?php',
-      #           'header("Content-Type: application/force-download");',
-      #           'header("Content-Disposition: attachment; filename=\\"' + file + '\\";")',
-      #           '?>']
-      #   readlines( path, file, self) do |lineno, line|
-      #     text << line
-      #   end
-      #   html = HTML.new( self, @sink, @sink + path + '/' + file + '.php')
-      #   html.start
-      #   html.html( text)
-      #   html.finish do |error|
-      #     error( file, 0, error)
-      #   end
+        child = dir_articles[m[1]]
+        parse_defn( path, file, child)
+      elsif m = /^(.*)\.md$/.match( file)
+        child = dir_articles[m[1]]
+        parse_md( path, file, child)
+      elsif m = /^(.*)\.yaml$/.match( file)
+        child = dir_articles[m[1]]
+        parse_yaml( path, file, child)
       elsif /\.(JPG|jpg|png|zip|rb)$/ =~ file
       else
         raise "Unhandled file: #{path1}"
@@ -232,6 +223,34 @@ class Compiler
     end
 
     dir_article
+  end
+
+  def parse_md( path, file, article)
+    debug_hook( article)
+    article.add_markdown( IO.read( @source + path + "/" + file))
+  end
+
+  def parse_yaml( path, file, article)
+    debug_hook( article)
+    defn = YAML.load( IO.read( @source + path + "/" + file))
+
+    if title = defn['title']
+      @commands.Title( self, article, 0, [title])
+    end
+
+    if date = defn['date']
+      @commands.Date( self, article, 0, [date])
+    end
+
+    if icon = defn['icon']
+      @commands.Icon( self, article, 0, [icon])
+    end
+
+    if images = defn['images']
+      images.each do |image|
+        @commands.Image( self, article, 0, [image['path'], image['tag']])
+      end
+    end
   end
 
   def parse_defn( path, defn, article)
@@ -446,9 +465,13 @@ class Compiler
       raise "Error" if file == "." or file == ".."
       next if file == ".DS_Store"
       next if file == "parameters.txt"
-      next if file == "structure.txt"
+      if path == @source
+        next if file == "README.md"
+        next if file == "dimensions.yaml"
+        next if file == "links.yaml"
+      end
       next if /\.kml\.xml$/ =~ file
-      next if /\.(afphoto|command|erb|md|pdf|yaml)$/ =~ file
+      next if /\.(afphoto|command|erb|pdf)$/ =~ file
 
         #next if file == "index.txt"
       next if /\.timestamp$/ =~ file
@@ -528,7 +551,7 @@ class Compiler
   end
 
   def find_article( path)
-    re = Regexp.new( "(^|/)#{path}(\.txt|/index.txt)")
+    re = Regexp.new( "(^|/)#{path}(|/index)$")
     matches = []
     match_article_filename( @articles, re, matches)
 

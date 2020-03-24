@@ -4,8 +4,10 @@ class Date
   end
 
   def process( article, parents, html)
-    html.date( @time) do |error|
-      article.error( lineno, error)
+    if article.has_any_content?
+      html.date( @time) do |error|
+        article.error( lineno, error)
+      end
     end
   end
 

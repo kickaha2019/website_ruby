@@ -37,7 +37,7 @@ class Link
 			@sink_filename = bound.sink_filename
 			@title         = bound.title unless @title
 		else
-			@article.error( lineno, error)
+			@article.error( 0, error)
 		end
 	end
 end

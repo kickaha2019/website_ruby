@@ -10,7 +10,7 @@ class ContentStart
 
     article.index( parents, html, article.images.size > 1)
 
-    if article.content.size > 1
+    if article.has_any_content?
       html.start_div( 'story t1')
     end
 

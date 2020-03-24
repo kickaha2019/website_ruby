@@ -7,6 +7,7 @@
 require 'fileutils'
 require 'content_start'
 require 'image'
+require "markdown.rb"
 
 class Article
   attr_accessor :content_added, :images, :sink_filename, :content
@@ -35,11 +36,10 @@ class Article
     @images          = []
     @icon            = nil
     @errors          = []
+    @markdown        = nil
 
     add_content( ContentStart.new)
-
-    sels = source.split( /[\/\.]/)
-    set_title( ((sels[-2] != 'index') ? sels[-2] : sels[-3]))
+    set_title( name)
   end
 
   def add_child( article)
@@ -58,6 +58,10 @@ class Article
 
   def add_image( compiler, lineno, image, caption)
     @images << describe_image( compiler, lineno, image, caption)
+  end
+
+  def add_markdown( defn)
+    @markdown = Markdown.new( defn)
   end
 
   def add_text_line( lineno, line, sep, lines)
@@ -194,8 +198,15 @@ class Article
     end
   end
 
-  def has_much_content?
+  def has_any_content?
+    return true if @markdown
     text_chars = 0
+    @content.each {|item| text_chars += item.text_chars}
+    text_chars > 0
+  end
+
+  def has_much_content?
+    text_chars = @markdown ? @markdown.text_chars : 0
     @content.each {|item| text_chars += item.text_chars}
     text_chars > 80
   end
@@ -301,11 +312,13 @@ class Article
   end
 
   def name
-    if m = /(^|\/)([^\/]*)\.txt/.match( @source_filename)
-      m[2]
-    else
-      @source_filename.split( "/")[-1]
-    end
+    path = @source_filename.split( "/")
+    (path[-1] == 'index') ? path[-2] : path[-1]
+    # if m = /(^|\/)([^\/]*)\.(txt|md)$/.match( @source_filename)
+    #   m[2]
+    # else
+    #   @source_filename.split( "/")[-1]
+    # end
   end
 
   def picture_sink_filename
@@ -314,6 +327,7 @@ class Article
   end
 
   def prepare( compiler)
+    @markdown.prepare( compiler) if @markdown
   end
 
   def prepare_name_for_index( text)
@@ -440,6 +454,7 @@ class Article
     @content.each do |item|
       item.process( self, parents, html)
     end
+    @markdown.process( self, parents, html) if @markdown
 
     if (@images.size > 1) && (! has_picture_page?)
       prepare_source_images( html, true)

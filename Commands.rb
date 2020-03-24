@@ -174,12 +174,12 @@ class Commands
 
 		article.add_image( compiler, lineno, path, entry[1])
 	end
-	
+
 	def convert_date( article, lineno, text)
 		day = -1
 		month = -1
 		year = -1
-		
+
 		text.split.each do |el|
 			i = el.to_i
 			if i > 1900
@@ -192,9 +192,9 @@ class Commands
 				end
 			end
 		end
-		
+
 		if (day > 0) && (month > 0) && (year > 0)
-            Time.gm( year, month, day)
+			Time.gm( year, month, day)
 		else
 			article.error( lineno, "Bad date [#{text}]")
 			@@default_date

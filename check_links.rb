@@ -77,7 +77,7 @@ class LinkChecker
 	def report_errors( path)
 		now = Time.now.to_i
 		sorted = @problems.keys.sort_by do |url|
-			@last_checked[url] ? @last_checked[url] : now
+			@last_checked[url] ? @last_checked[url] : 0
 		end
 
 		if sorted.size > MAX_ERRS
