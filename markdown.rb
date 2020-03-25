@@ -5,18 +5,27 @@ class Markdown
     @defn = defn
   end
 
+  def part( text)
+    doc = CommonMarker.render_doc( text)
+    doc.each do |para|
+      return para.first_child
+    end
+    raise "Grandchild not found"
+  end
+
   def prepare( compiler)
-    
+    doc = CommonMarker.render_doc( @defn)
+
     # Substitute urls for symbolic names
-    defn = @defn.gsub( /\]\([^\)]*\)/) do |match|
-      if mapped = compiler.link( match[2..-2])
-        "](#{mapped})"
-      else
-        match
+    doc.walk do |node|
+      if node.type == :link
+        if mapped = compiler.link( node.url)
+          node.insert_before( part( "[#{node.first_child.string_content}](#{mapped})"))
+          node.delete
+        end
       end
     end
 
-    doc = CommonMarker.render_doc( defn)
     @html = doc.to_html.split("\n")
 
     # Avoid blank line at top by flattening first paragraph
