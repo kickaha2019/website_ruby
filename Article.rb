@@ -232,7 +232,7 @@ class Article
   end
 
   def index( parents, html, pictures)
-    wrap = true
+    wrap = @markdown ? @markdown.wrap? : true
     @content.each do |item|
       wrap = false unless item.wrap?
     end
@@ -327,7 +327,7 @@ class Article
   end
 
   def prepare( compiler)
-    @markdown.prepare( compiler) if @markdown
+    @markdown.prepare( compiler, self) if @markdown
   end
 
   def prepare_name_for_index( text)

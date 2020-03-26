@@ -320,7 +320,13 @@ class Compiler
 
   def prepare( article)
     debug_hook( article)
-    article.prepare( self)
+
+    begin
+      article.prepare( self)
+    rescue Exception => bang
+      article.error( 0, bang.message)
+    end
+
     article.children.each do |child|
       prepare( child)
     end
@@ -556,9 +562,9 @@ class Compiler
     match_article_filename( @articles, re, matches)
 
     if matches.size < 1
-      return nil, "Link not found"
+      return nil, "Link not found for #{path}"
     elsif matches.size > 1
-      return nil, "Ambiguous link"
+      return nil, "Ambiguous link for #{path}"
     else
       return matches[0], nil
     end

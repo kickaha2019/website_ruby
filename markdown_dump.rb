@@ -14,8 +14,13 @@ require 'commonmarker'
 def dump_structure( node, indent, io)
   if node.type == :blockquote
     io.puts "#{indent}Blockquote:"
+  elsif node.type == :code_block
+    io.puts "#{indent}Codeblock: #{node.fence_info}"
+    node.string_content.split("\n").each do |line|
+      io.puts "#{indent}  #{line}"
+    end
   elsif node.type == :document
-    io.puts "#{indent}document:"
+    io.puts "#{indent}Document:"
   elsif node.type == :emph
     io.puts "#{indent}Emph:"
   elsif node.type == :header
