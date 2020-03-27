@@ -1,4 +1,3 @@
-require 'anchor'
 require 'code'
 require 'date'
 require 'heading'
@@ -16,13 +15,7 @@ class Commands
 	def Anchor( compiler, article, lineno, entry)
 		if entry.size < 1
 			article.error( lineno, "No entries for anchor")
-		else
-			entry.each do |link|
-				article.validate_anchor( compiler, lineno, link)
-			end
 		end
-
-		article.add_content( Anchor.new)
 	end
 
 	def Code( compiler, article, lineno, entry)

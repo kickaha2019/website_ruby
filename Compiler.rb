@@ -77,11 +77,6 @@ class Compiler
     # Load the templates
     load_templates
 
-    # Find anchors in all the articles
-    # and also gather lat lons from KML files
-    @anchors = Hash.new {|h,k| h[k] = {lat:nil, lon:nil, links:[], used:false}}
-    find_anchors('')
-
     # Parse all the articles recursively
     @title = load_parameters( "")['TITLE']
     @articles = parse( nil, "")
@@ -98,11 +93,6 @@ class Compiler
     # Delete files not regenerated
     tidy_up( @sink)
 
-    # Check anchors all used
-    @anchors.each_pair do |name, info|
-      error( name, nil, "Anchor not used") unless info[:used]
-    end
-
     report_errors( @articles)
     puts "*** #{@errors} Errors in compilation" if @errors > 0
   end
@@ -113,70 +103,11 @@ class Compiler
     end
   end
 
-  # Find anchors in the articles
-  def find_anchors(path)
-
-    # Skip special directories
-    return if ['/resources', '/templates', '/fileinfo'].include?( path)
-
-    # Loop over source files
-    Dir.entries( @source + path).each do |file|
-      next if /^\./ =~ file
-      path1 = path + "/" + file
-
-      if File.directory?( @source + path1)
-        find_anchors(path1)
-      elsif /\.kml\.xml$/ =~ file
-        parse_kml_xml( @source + path1)
-      elsif m = /^(.*)\.txt$/.match( file)
-        found, php, gather, count = [], false, true, 0
-
-        IO.readlines( @source + path1).each do |line|
-          php = true if /^PHP/ =~ line
-          if /^(Anchor):/ =~ line
-            count += 1
-            gather = true
-          elsif /^\S/ =~ line
-            gather = false
-          elsif gather && line.strip != ''
-            found << line.strip
-          end
-        end
-
-        url = "#{@source}#{path1.gsub( /\.txt$/, php ? '.php' : '.html')}#a#{count}"
-        found.each do |link|
-          @anchors[link][:links] << url
-        end
-      end
-    end
-  end
-
   # Parse the articles
   def parse( parent, path)
 
     # Skip special directories
     return if ['/resources', '/templates', '/fileinfo'].include?( path)
-
-    # Do templating for any YAML files with a template attribute
-    Dir.entries( @source+path).each do |file|
-      path1 = path + "/" + file
-      if m = /^(.*)\.yaml$/.match( file)
-        defn = YAML.load( IO.read( @source + path1))
-        next unless defn['template']
-
-        File.open( @source + path + '/' + m[1] + '.txt', 'w') do |io|
-          begin
-            defn['links']   = get_local_links( @source+path)
-            defn['anchors'] = @anchors
-            erb = ERB.new( @templates[defn['template']])
-            io.print erb.result( Bound.new( defn).get_binding)
-          rescue
-            puts "*** Error templating #{path1}"
-            raise
-          end
-        end
-      end
-    end
 
     source = list_dir( @source + path)
 
@@ -290,16 +221,6 @@ class Compiler
 
     if verb
       parse_verb( verb, strip(entry), article, lineno)
-    end
-  end
-
-  def parse_kml_xml( path)
-    doc = REXML::Document.new IO.read( path)
-    REXML::XPath.each( doc, "//Placemark") do |place|
-      entry = @anchors[ place.elements['name'].text.strip]
-      coords = place.elements['Point'].elements['coordinates'].text.strip.split(',')
-      entry[:lat] = coords[1].to_f
-      entry[:lon] = coords[0].to_f
     end
   end
 
@@ -431,10 +352,6 @@ class Compiler
 
   def get_local_links( path)
     links = {}
-    @anchors.each_pair do |name,entry|
-      links[name] = entry[:links].collect {|target| HTML::relative_path( path + '/index.html', target)}
-      entry[:urls] = links[name]
-    end
 
     Dir.entries( path).each do |f|
       next if /^\./ =~ f
@@ -447,11 +364,6 @@ class Compiler
     end
 
     links
-  end
-
-  def is_anchor_defined?(name)
-    @anchors[name][:used] = true
-    ! @anchors[name][:lat].nil?
   end
 
   def is_source_file?( file)

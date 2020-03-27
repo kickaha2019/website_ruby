@@ -13,7 +13,6 @@ class HTML
     @float_height = 10
     @floats       = []
     @sink         = sink
-    @n_anchors    = 0
     @div_id       = nil
     @max_floats   = 0
     @local_links = {}
@@ -57,15 +56,6 @@ class HTML
     write( text)
     end_div
     end_cell
-  end
-
-  def anchor
-    @n_anchors += 1
-    if @div_id
-      @error = 'Previous anchor not used'
-    else
-      @div_id = "a#{@n_anchors}"
-    end
   end
 
   def breadcrumbs( parents, title, pictures_link)
@@ -207,10 +197,6 @@ class HTML
       end
     end
 
-    if @div_id
-      @error = 'Last anchor not used'
-    end
-
     if @error
       yield @error
     end
@@ -342,9 +328,6 @@ class HTML
   def self.relative_path( from, to)
     from = from.split( "/")
     from = from[0...-1] if /\.(html|php|txt)$/ =~ from[-1]
-    if to.nil?
-      puts "DEBUG100"
-    end
     to = to.split( "/")
     while (to.size > 0) and (from.size > 0) and (to[0] == from[0])
       from = from[1..-1]
@@ -380,10 +363,8 @@ class HTML
   end
 
   def start_div( css_class=nil)
-    embed_id    = @div_id ? " id=\"#{@div_id}\"" : ''
     embed_class = css_class ? " class=\"#{css_class}\"" : ''
-    @output << "<div#{embed_id}#{embed_class}>"
-    @div_id = nil
+    @output << "<div#{embed_class}>"
   end
 
   def start_index( index_classes)

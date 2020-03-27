@@ -474,10 +474,4 @@ class Article
     html.end_div
     html.end_page
   end
-
-  def validate_anchor( compiler, lineno, link)
-    if ! compiler.is_anchor_defined?(link)
-      error( lineno, "Unknown anchor link: #{link}")
-    end
-  end
 end
