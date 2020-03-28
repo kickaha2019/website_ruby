@@ -254,6 +254,7 @@ class Compiler
       article.prepare( self)
     rescue Exception => bang
       article.error( 0, bang.message)
+      raise
     end
 
     article.children.each do |child|

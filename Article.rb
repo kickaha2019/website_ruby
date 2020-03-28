@@ -334,9 +334,11 @@ class Article
     if @markdown
       max_floats = @markdown.get_max_floats
       dims = compiler.dimensions( 'icon')
+      limit = (max_floats > @images.size) ? @images.size : max_floats
 
-      @images.each_index do |index|
-        next if index >= max_floats
+      @images.each_index do |rindex|
+        next if rindex >= max_floats
+        index = limit - 1 - rindex
         raw = ["<A CLASS=\"#{((index % 2) == 1) ? 'left' : 'right'}\" HREF=\"#{picture_rp}\">"]
         @images[index].prepare_images( dims, :prepare_source_image) do |image, w, h, sizes|
           compiler.record( image)
