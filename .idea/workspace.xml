@@ -3,7 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="9e440521-c7e4-4f23-9012-a98effea9bfa" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/convert_text_to_md.rb" beforeDir="false" afterPath="$PROJECT_DIR$/convert_text_to_md.rb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Article.rb" beforeDir="false" afterPath="$PROJECT_DIR$/Article.rb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/markdown.rb" beforeDir="false" afterPath="$PROJECT_DIR$/markdown.rb" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -160,7 +160,7 @@
         </COVERAGE_PATTERN>
       </EXTENSION>
       <RUBY_RUN_CONFIG NAME="SCRIPT_PATH" VALUE="$MODULE_DIR$/convert_text_to_md.rb" />
-      <RUBY_RUN_CONFIG NAME="SCRIPT_ARGS" VALUE="$MODULE_DIR$/../Articles/links.yaml $MODULE_DIR$/../Articles/about" />
+      <RUBY_RUN_CONFIG NAME="SCRIPT_ARGS" VALUE="$MODULE_DIR$/../Articles/links.yaml $MODULE_DIR$/../Articles/Cakes" />
       <method v="2" />
     </configuration>
     <configuration name="Find links" type="RubyRunConfigurationType" factoryName="Ruby">
@@ -500,7 +500,7 @@
       <workItem from="1585321688401" duration="1291000" />
       <workItem from="1585336496562" duration="1899000" />
       <workItem from="1585398565967" duration="1506000" />
-      <workItem from="1585410797420" duration="517000" />
+      <workItem from="1585410797420" duration="4969000" />
     </task>
     <servers />
   </component>
@@ -622,12 +622,20 @@
           <option name="timeStamp" value="75" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="ruby-line">
-          <url>file://$PROJECT_DIR$/markdown.rb</url>
-          <line>19</line>
+          <url>file://$PROJECT_DIR$/Article.rb</url>
+          <line>339</line>
           <properties a="-1">
             <option name="block-ordinal" value="-1" />
           </properties>
-          <option name="timeStamp" value="77" />
+          <option name="timeStamp" value="85" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="ruby-line">
+          <url>file://$PROJECT_DIR$/Article.rb</url>
+          <line>345</line>
+          <properties a="-1">
+            <option name="block-ordinal" value="-1" />
+          </properties>
+          <option name="timeStamp" value="86" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
@@ -637,8 +645,8 @@
     <SUITE FILE_PATH="coverage/ruby@fred.rcov" NAME="fred Coverage Results" MODIFIED="1584818345278" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Add_gallery.rcov" NAME="Add gallery Coverage Results" MODIFIED="1579817652669" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/../Articles/Diary/2020/New_Zealand/2 Godzilla Hotel" MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Overlay_editor.rcov" NAME="Overlay editor Coverage Results" MODIFIED="1561805039803" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
-    <SUITE FILE_PATH="coverage/ruby@Revamp_website.rcov" NAME="Revamp website Coverage Results" MODIFIED="1585411411757" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." MODULE_NAME="ruby" />
-    <SUITE FILE_PATH="coverage/ruby@Convert_txt_to_md.rcov" NAME="Convert txt to md Coverage Results" MODIFIED="1585411396470" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
+    <SUITE FILE_PATH="coverage/ruby@Revamp_website.rcov" NAME="Revamp website Coverage Results" MODIFIED="1585416597514" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." MODULE_NAME="ruby" />
+    <SUITE FILE_PATH="coverage/ruby@Convert_txt_to_md.rcov" NAME="Convert txt to md Coverage Results" MODIFIED="1585414420854" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Find_links.rcov" NAME="Find links Coverage Results" MODIFIED="1580854552539" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Validate_reachability.rcov" NAME="Validate reachability Coverage Results" MODIFIED="1583492917547" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />
     <SUITE FILE_PATH="coverage/ruby@Check_golden_files.rcov" NAME="Check golden files Coverage Results" MODIFIED="1583609623359" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="rcov" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" MODULE_NAME="ruby" />

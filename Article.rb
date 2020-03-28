@@ -321,13 +321,33 @@ class Article
     # end
   end
 
+  def picture_rp
+    picture_sink_filename.split('/')[-1]
+  end
+
   def picture_sink_filename
     m = /^(.*)\.[a-zA-Z]*$/.match( @sink_filename)
     m[1] + '_pictures.html'
   end
 
   def prepare( compiler)
-    @markdown.prepare( compiler, self) if @markdown
+    if @markdown
+      max_floats = @markdown.get_max_floats
+      dims = compiler.dimensions( 'icon')
+
+      @images.each_index do |index|
+        next if index >= max_floats
+        raw = ["<A CLASS=\"#{((index % 2) == 1) ? 'left' : 'right'}\" HREF=\"#{picture_rp}\">"]
+        @images[index].prepare_images( dims, :prepare_source_image) do |image, w, h, sizes|
+          compiler.record( image)
+          rp = HTML::relative_path( @sink_filename, image)
+          raw << "<IMG CLASS=\"#{sizes}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" SRC=\"#{rp}\" ALT=\"#{@images[index].caption}\">"
+        end
+        raw << '</A>'
+        @markdown.inject_float( index, raw.join(''))
+      end
+      @markdown.prepare( compiler, self)
+    end
   end
 
   def prepare_name_for_index( text)
