@@ -3,6 +3,7 @@ require 'commonmarker'
 class Markdown
   def initialize( defn)
     @doc = CommonMarker.render_doc( defn)
+    @html = []
   end
 
   def part( text)

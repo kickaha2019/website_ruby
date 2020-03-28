@@ -37,23 +37,37 @@ class ConvertTextToMD
       raise
     end
 
+    #raise 'Dev'
     if markdown.size > 0
-      puts "... Would have written #{md_file}"
-      # File.open( md_file, 'w') {io.puts markdown.join("\n")}
+      puts "... Writing #{md_file}"
+      File.open( md_file, 'w') {|io| io.puts markdown.join("\n")}
     end
 
     if yaml.keys.size > 0
-      puts "... Would have written #{yaml_file}"
-      # File.open( yaml_file, 'w') {io.puts yaml.to_yaml}
+      puts "... Writing #{yaml_file}"
+      File.open( yaml_file, 'w') {|io| io.puts yaml.to_yaml}
     end
 
-    puts "... Would have deleted #{txt_file}"
-    # File.delete( txt_file)
+    puts "... Deleting #{txt_file}"
+    File.delete( txt_file)
   end
 
   def Code( lines, index, markdown, yaml)
     markdown << '~~~'
-    index = Text( lines, index, markdown, yaml)
+    while (index < lines.size) && (! (/^\S/ =~ lines[index]))
+      line = lines[index]
+      index += 1
+
+      if /^\t/ =~ line
+        line = line[1..-1]
+      elsif /^  / =~ line
+        line = line[2..-1]
+      else
+        line = line[1..-1]
+      end
+
+      markdown << line.gsub( "''", '*')
+    end
     markdown << '~~~'
     index
   end
@@ -91,6 +105,10 @@ class ConvertTextToMD
       end
     end
     index
+  end
+
+  def load_links( path)
+    @links = YAML.load( IO.read( path))
   end
 
   def Link( lines, index, markdown, yaml)
@@ -157,8 +175,24 @@ class ConvertTextToMD
   end
 
   def Text( lines, index, markdown, yaml)
+    local_links = {}
     while (index < lines.size) && (! (/^\S/ =~ lines[index]))
-      markdown << lines[index].chomp.gsub( "''", '*')
+      line = lines[index].strip.gsub( "''", '*')
+      line = line.gsub( /\[[^\[]*\]/) do |link|
+        link = link[1...-1]
+        if @links[link]
+          tag,url = link, @links[link]
+        elsif local_links[link]
+          tag,url = link, local_links[link]
+        elsif m = /^(\S*) (.*)$/.match( link)
+          tag,url = m[2], m[1]
+          local_links[m[2]] = m[1]
+        else
+          tag,url = link, link
+        end
+        "[#{tag}](#{url})"
+      end
+      markdown << line
       index += 1
     end
     index
@@ -174,4 +208,5 @@ class ConvertTextToMD
 end
 
 cnv = ConvertTextToMD.new
-cnv.process( ARGV[0])
+cnv.load_links( ARGV[0])
+cnv.process( ARGV[1])
