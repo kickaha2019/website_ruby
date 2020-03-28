@@ -177,6 +177,14 @@ class Compiler
       @commands.Icon( self, article, 0, [icon])
     end
 
+    if ext = defn['extension']
+      if ext == 'php'
+        article.set_php
+      else
+        article.error( 0, "Extension #{ext} not supported")
+      end
+    end
+
     if images = defn['images']
       images.each do |image|
         @commands.Image( self, article, 0, [image['path'], image['tag']])
