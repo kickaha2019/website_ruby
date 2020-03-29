@@ -478,7 +478,11 @@ class Compiler
   end
 
   def find_article( path)
-    re = Regexp.new( "(^|/)#{path}(|/index)$")
+    if /^\// =~ path
+      re = Regexp.new( "^#{@source}#{path}(|/index)$")
+    else
+      re = Regexp.new( "/#{path}(|/index)$")
+    end
     matches = []
     match_article_filename( @articles, re, matches)
 
