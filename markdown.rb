@@ -50,17 +50,11 @@ class Markdown
 
     # Generate HTML from parse tree
     renderer = ArticleRenderer.new( compiler, article, @injected)
-    html = renderer.to_html( @doc)
-    @html = html.split("\n")
-
-    # Convert tabs to double spaces in the HTML
-    @html.each_index do |i|
-      @html[i] = @html[i].gsub( "\t") {|match| '  '}
-    end
+    @html = renderer.to_html( @doc)
   end
 
   def process( article, parents, html)
-    html.html( @html)
+    html.html( [@html])
   end
 
   def text_chars

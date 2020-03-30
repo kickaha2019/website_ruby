@@ -125,6 +125,8 @@ class ConvertTextToMD
       markdown << lines[index].strip
       index += 1
     end
+
+    markdown << ''
     index
   end
 
@@ -171,6 +173,8 @@ class ConvertTextToMD
       markdown << lines[index].strip
       index += 1
     end
+
+    markdown << ''
     index
   end
 

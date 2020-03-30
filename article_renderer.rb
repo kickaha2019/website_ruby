@@ -8,6 +8,13 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
     @injected = injected
   end
 
+  def has_text?( node)
+    node.walk do |child|
+      return true if child.type == :text
+    end
+    false
+  end
+
   def link(node)
     if node.url.nil?
       url = ''
@@ -46,7 +53,8 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
   end
 
   def table(node)
-    out( '<div class="table">')
+    clazz = has_text?( node.first_child) ? 'table' : 'list'
+    out( "<div class=\"#{clazz}\">")
     super
     out( '</div>')
   end
