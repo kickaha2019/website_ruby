@@ -2,7 +2,7 @@ require 'article_renderer'
 
 class Markdown
   def initialize( defn)
-    @doc = CommonMarker.render_doc( defn, [:UNSAFE])
+    @doc = CommonMarker.render_doc( defn, [:UNSAFE], [:table])
     @html = []
     @injected = {}
   end
@@ -70,6 +70,7 @@ class Markdown
   def wrap?
     @doc.walk do |node|
       return false if node.type == :code_block
+      return false if node.type == :table
     end
     true
   end

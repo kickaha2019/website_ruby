@@ -122,7 +122,7 @@ class ConvertTextToMD
     markdown << '|-|-|'
 
     while (index < lines.size) && (lines[index].strip != '')
-      markdown << lines[index].chomp
+      markdown << lines[index].strip
       index += 1
     end
     index
@@ -163,12 +163,12 @@ class ConvertTextToMD
   end
 
   def Table( lines, index, markdown, yaml)
-    markdown << lines[index]
+    markdown << lines[index].strip
     markdown << lines[index].split('|').collect {'-'}.join('|')
     index += 1
 
     while (index < lines.size) && (lines[index].strip != '')
-      markdown << lines[index].chomp
+      markdown << lines[index].strip
       index += 1
     end
     index

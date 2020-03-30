@@ -13,6 +13,8 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
       url = ''
     elsif /^http/ =~ node.url
       url = node.url
+    elsif /\.(html|php)$/ =~ node.url
+      url = HTML::relative_path( @article.sink_filename, node.url)
     else
       url = @compiler.link( node.url)
       unless url
@@ -41,6 +43,12 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
     else
       super
     end
+  end
+
+  def table(node)
+    out( '<div class="table">')
+    super
+    out( '</div>')
   end
 
   def to_html( doc)

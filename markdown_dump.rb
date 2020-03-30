@@ -33,6 +33,14 @@ def dump_structure( node, indent, io)
     io.puts "#{indent}Softbreak:"
   elsif node.type == :strong
     io.puts "#{indent}Strong:"
+  elsif node.type == :table
+    io.puts "#{indent}Table:"
+  elsif node.type == :table_cell
+    io.puts "#{indent}Table cell:"
+  elsif node.type == :table_header
+    io.puts "#{indent}Table header:"
+  elsif node.type == :table_row
+    io.puts "#{indent}Table row:"
   elsif node.type == :text
     io.puts "#{indent}Text: #{node.string_content}"
   else
@@ -44,7 +52,7 @@ def dump_structure( node, indent, io)
   end
 end
 
-doc = CommonMarker.render_doc( IO.read( ARGV[0]))
+doc = CommonMarker.render_doc( IO.read( ARGV[0]), [:DEFAULT], [:table])
 File.open( ARGV[1], 'w') do |io|
   dump_structure( doc, '', io)
 end
