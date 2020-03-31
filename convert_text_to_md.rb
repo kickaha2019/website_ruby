@@ -66,7 +66,7 @@ class ConvertTextToMD
         line = line[1..-1]
       end
 
-      markdown << line.gsub( "''", '*')
+      markdown << line.nil? ? '' : line.gsub( "''", '*')
     end
     markdown << '~~~'
     index

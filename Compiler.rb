@@ -168,6 +168,12 @@ class Compiler
         @commands.Image( self, article, 0, [image['path'], image['tag']])
       end
     end
+
+    if links = defn['links']
+      links.each do |link|
+        @commands.Link( self, article, 0, [link['path'], link['tag']])
+      end
+    end
   end
 
   def parse_defn( path, defn, article)

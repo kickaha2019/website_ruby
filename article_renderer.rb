@@ -18,7 +18,7 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
   def link(node)
     if node.url.nil?
       url = ''
-    elsif /^http/ =~ node.url
+    elsif /^(http|https|mailto):/ =~ node.url
       url = node.url
     elsif /\.(html|php)$/ =~ node.url
       url = HTML::relative_path( @article.sink_filename, node.url)
