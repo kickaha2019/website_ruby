@@ -16,18 +16,26 @@ class LinkFinder
 		@links = Hash.new {|h,k| h[k] = []}
 	end
 
-	def find_links
+	def find_links( from = ARTICLES)
 		YAML.load( File.open( ARTICLES + "/links.yaml")).each_pair do |link, url|
 			@links[url] << "File: #{ARTICLES}/links.yaml, Name: #{link}"
 		end
 
-		scan_articles( ARTICLES) do |f|
+		scan_articles( from) do |f|
 			lines = IO.readlines( f)
 			lines.each_index do |i|
 				line = lines[i]
-				while m = /^(.*)\[(http\S*)\s(.*)$/.match( line)
-					@links[m[2]] << "File: #{f}, Line: #{i+1}"
-					line = m[1] + m[2]
+
+				if /\.md$/ =~ f
+					while m = /\]\((http[^\]]*)\)(.*)$/.match( line)
+						@links[m[1]] << "File: #{f}, Line: #{i+1}"
+						line = m[2]
+					end
+				else
+					while m = /^(.*)\[(http\S*)\s(.*)$/.match( line)
+						@links[m[2]] << "File: #{f}, Line: #{i+1}"
+						line = m[1] + m[3]
+					end
 				end
 			end
 		end
@@ -54,7 +62,7 @@ class LinkFinder
 				next if /^\./ =~ f
 				scan_articles( dir + '/' + f) {|article| yield article}
 			end
-		elsif /\.txt$/ =~ dir
+		elsif /\.(txt|md)$/ =~ dir
 			yield dir
 		end
 	end
