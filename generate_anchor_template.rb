@@ -47,6 +47,7 @@ class GenerateAnchorTemplate
         if defn['anchors']
           defn['anchors'].each do |anchor|
             @anchors[anchor][:links] << relative_path( target, path1.gsub(/\.yaml/, '.html'))
+            @anchors[anchor][:used] = true
           end
         end
       end
