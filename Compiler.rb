@@ -30,28 +30,6 @@ load "Link.rb"
 class Compiler
   attr_reader :title
 
-  class Bound
-    def initialize( defn)
-      @defn = defn
-    end
-
-    def get_binding
-      binding
-    end
-
-    def e( txt)
-      CGI::escape( txt)
-    end
-
-    def method_missing( symbol, *args)
-      if @defn.has_key?(symbol.to_s)
-        value = @defn[symbol.to_s]
-        return value ? value : ''
-      end
-      nil
-    end
-  end
-
   # Initialisation
   def initialize( source, sink, debug_pages=nil)
     @errors = 0

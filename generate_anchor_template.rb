@@ -12,6 +12,7 @@ require 'json'
 require 'yaml'
 require 'rexml/document'
 require 'rexml/xpath'
+require 'erb'
 
 class GenerateAnchorTemplate
 	def initialize
@@ -37,10 +38,10 @@ class GenerateAnchorTemplate
       next if /^\./ =~ file
       path1 = path + "/" + file
 
-      if File.directory?( @source + path1)
+      if File.directory?( path1)
         find_anchors(path1, target)
       elsif /\.kml\.xml$/ =~ file
-        parse_kml_xml( @source + path1)
+        parse_kml_xml( path1)
       elsif m = /^(.*)\.yaml$/.match( file)
         defn = YAML.load( IO.read( path1))
         if defn['anchors']
@@ -54,7 +55,12 @@ class GenerateAnchorTemplate
 
   def generate( template)
     erb = ERB.new( IO.read( template))
-    erb.result( Bound.new( {anchors:@anchors}).get_binding)
+    erb.result( get_binding)
+  end
+
+  def get_binding
+    anchors = @anchors
+    binding
   end
 
   def parse_kml_xml( path)
@@ -82,8 +88,8 @@ end
 
 gam = GenerateAnchorTemplate.new
 gam.find_anchors( ARGV[0], ARGV[2])
-gam.check_all_anchors_used
-gam.check_all_anchors_defined
 File.open( ARGV[2], 'w') do |io|
   io.print gam.generate( ARGV[1])
 end
+gam.check_all_anchors_used
+gam.check_all_anchors_defined
