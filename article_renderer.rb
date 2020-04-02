@@ -65,6 +65,7 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
     warnings.each do |w|
       @article.error( 0, w)
     end
+    @article.error( 0, 'Markdown unknown issue') if output.nil? || (output.strip == '')
     output
   end
 end

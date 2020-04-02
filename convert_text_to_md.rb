@@ -8,7 +8,7 @@ class ConvertTextToMD
   def Anchor( lines, index, markdown, yaml)
     yaml['anchors'] = [] unless yaml['anchors']
     while /^\s+\S/ =~ lines[index]
-      yaml['anchors'] << lines[index]
+      yaml['anchors'] << lines[index].lstrip
       index += 1
     end
     index
@@ -52,6 +52,27 @@ class ConvertTextToMD
     File.delete( txt_file)
   end
 
+  def convert_links( text, local_links={})
+    if /LinkedIn/ =~ text
+      puts 'DEBUG100'
+    end
+
+    text.gsub( /\[[^\[]*\]/) do |link|
+      link = link[1...-1]
+      if @links[link]
+        tag,url = link, @links[link]
+      elsif local_links[link]
+        tag,url = link, local_links[link]
+      elsif m = /^(\S*) (.*)$/.match( link)
+        tag,url = m[2], m[1]
+        local_links[m[2]] = m[1]
+      else
+        tag,url = link, link
+      end
+      "[#{tag}](#{url})"
+    end
+  end
+
   def Code( lines, index, markdown, yaml)
     markdown << '~~~'
     while (index < lines.size) && (! (/^\S/ =~ lines[index]))
@@ -66,7 +87,7 @@ class ConvertTextToMD
         line = line[1..-1]
       end
 
-      markdown << line.nil? ? '' : line.gsub( "''", '*')
+      markdown << (line.nil? ? '' : line.gsub( "''", '*'))
     end
     markdown << '~~~'
     index
@@ -122,7 +143,7 @@ class ConvertTextToMD
     markdown << '|-|-|'
 
     while (index < lines.size) && (lines[index].strip != '')
-      markdown << lines[index].strip
+      markdown << convert_links( lines[index].strip)
       index += 1
     end
 
@@ -170,7 +191,7 @@ class ConvertTextToMD
     index += 1
 
     while (index < lines.size) && (lines[index].strip != '')
-      markdown << lines[index].strip
+      markdown << convert_links( lines[index].strip)
       index += 1
     end
 
@@ -182,20 +203,7 @@ class ConvertTextToMD
     local_links = {}
     while (index < lines.size) && (! (/^\S/ =~ lines[index]))
       line = lines[index].strip.gsub( "''", '*')
-      line = line.gsub( /\[[^\[]*\]/) do |link|
-        link = link[1...-1]
-        if @links[link]
-          tag,url = link, @links[link]
-        elsif local_links[link]
-          tag,url = link, local_links[link]
-        elsif m = /^(\S*) (.*)$/.match( link)
-          tag,url = m[2], m[1]
-          local_links[m[2]] = m[1]
-        else
-          tag,url = link, link
-        end
-        "[#{tag}](#{url})"
-      end
+      line = convert_links( line, local_links)
       markdown << line
       index += 1
     end
