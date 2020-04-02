@@ -233,6 +233,8 @@ class Article
 
   def index( parents, html, pictures)
     wrap = @markdown ? @markdown.wrap? : true
+    wrap = false if /\.php$/ =~ @sink_filename
+
     @content.each do |item|
       wrap = false unless item.wrap?
     end

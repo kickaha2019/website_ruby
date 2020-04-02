@@ -15,6 +15,10 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
     false
   end
 
+  def html(node)
+    out( node.string_content)
+  end
+
   def link(node)
     if node.url.nil?
       url = ''

@@ -25,6 +25,10 @@ def dump_structure( node, indent, io)
     io.puts "#{indent}Emph:"
   elsif node.type == :header
     io.puts "#{indent}Header: #{node.header_level}"
+  elsif node.type == :html
+    io.puts "#{indent}HTML: #{node.string_content}"
+  elsif node.type == :inline_html
+    io.puts "#{indent}Inline HTML:"
   elsif node.type == :link
     io.puts "#{indent}Link: url=#{node.url} title=#{node.title}"
   elsif node.type == :paragraph
