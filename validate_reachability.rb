@@ -57,6 +57,7 @@ class ValidateReachability
 		#puts "... Scanning #{page}"
 		
 		IO.readlines( page).each do |line|
+			next if /marker\.bindPopup/ =~ line
 			offset = 0
 			while m = / href="([^"]*\.(html|php))"/i.match( line, offset)
 				if not /^http/ =~ m[1]

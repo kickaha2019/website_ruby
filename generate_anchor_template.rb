@@ -76,7 +76,7 @@ class GenerateAnchorTemplate
 
   def relative_path( from, to)
     from = from.split( "/")
-    from = from[0...-1] if /\.(html|php|txt)$/ =~ from[-1]
+    from = from[0...-1] if /\.(html|php|txt|md)$/ =~ from[-1]
     to = to.split( "/")
     while (to.size > 0) and (from.size > 0) and (to[0] == from[0])
       from = from[1..-1]

@@ -64,6 +64,7 @@ class Markdown
   def wrap?
     @doc.walk do |node|
       return false if node.type == :code_block
+      return false if node.type == :html
       return false if node.type == :table
     end
     true
