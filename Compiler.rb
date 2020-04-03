@@ -23,11 +23,11 @@ require 'yaml'
 require 'cgi'
 
 load "Article.rb"
-load "Commands.rb"
 load "HTML.rb"
 load "Link.rb"
 
 class Compiler
+  @@default_date = Time.gm( 1970, "Jan", 1)
   attr_reader :title
 
   # Initialisation
@@ -37,7 +37,6 @@ class Compiler
     @sink = sink
     @debug_pages = debug_pages.nil? ? nil : Regexp.new( debug_pages)
     @special_chars = {}
-    @commands = Commands.new
     @templates = {}
     @links = YAML.load( File.open( source + "/links.yaml"))
     @dimensions = YAML.load( File.open( source + "/dimensions.yaml"))
@@ -141,15 +140,26 @@ class Compiler
     defn = YAML.load( IO.read( @source + path + "/" + file))
 
     if title = defn['title']
-      @commands.Title( self, article, 0, [title])
+      if /[\["\|&<>]/ =~ title
+        article.error( 0, "Title containing special character: " +	title)
+      else
+        article.set_title( title)
+      end
     end
 
     if date = defn['date']
-      @commands.Date( self, article, 0, [date])
+      t = convert_date( article, 0, date)
+      article.set_date( t)
+      article.add_content( Date.new( t))
     end
 
     if icon = defn['icon']
-      @commands.Icon( self, article, 0, [icon])
+      if /^\// =~ icon
+        article.set_icon( self, 0, icon)
+      else
+        path = abs_filename( article.source_filename, icon)
+        article.set_icon( self, 0, path)
+      end
     end
 
     if ext = defn['extension']
@@ -162,13 +172,22 @@ class Compiler
 
     if images = defn['images']
       images.each do |image|
-        @commands.Image( self, article, 0, [image['path'], image['tag']])
+        path = image['path'].strip
+        unless /^\// =~ path
+          path = abs_filename( article.source_filename, path)
+        end
+
+        if File.exists?( path)
+          article.add_image( self, 0, path, image['tag'])
+        else
+          article.error( 0, "Image file not found: " + image['path'])
+        end
       end
     end
 
     if links = defn['links']
       links.each do |link|
-        @commands.Link( self, article, 0, [link['path'], link['tag']])
+        article.add_child( Link.new( article, 0, link['path'], link['tag']))
       end
     end
   end
@@ -224,6 +243,42 @@ class Compiler
 # =================================================================
 # Helper methods
 # =================================================================
+
+  def abs_filename( path, filename)
+    return filename if /^\// =~ filename
+    path = File.dirname( path)
+    while /^\.\.\// =~ filename
+      path = File.dirname( path)
+      filename = filename[3..-1]
+    end
+    path + '/' + filename
+  end
+
+  def convert_date( article, lineno, text)
+    day = -1
+    month = -1
+    year = -1
+
+    text.split.each do |el|
+      i = el.to_i
+      if i > 1900
+        year = i
+      elsif (i > 0) && (i < 32)
+        day = i
+      else
+        if i = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"].index( el[0..2].downcase)
+          month = i + 1
+        end
+      end
+    end
+
+    if (day > 0) && (month > 0) && (year > 0)
+      Time.gm( year, month, day)
+    else
+      article.error( lineno, "Bad date [#{text}]")
+      @@default_date
+    end
+  end
 
   def error( path, lineno, msg)
     @errors = @errors + 1
