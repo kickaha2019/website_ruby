@@ -116,9 +116,6 @@ class Compiler
       if File.directory?( @source + path1)
         Dir.mkdir( @sink + path1) if not File.exists?( @sink + path1)
         parse( dir_article, path1)
-      elsif m = /^(.*)\.txt$/.match( file)
-        child = dir_articles[m[1]]
-        parse_defn( path, file, child)
       elsif m = /^(.*)\.md$/.match( file)
         child = dir_articles[m[1]]
         parse_md( path, file, child)
@@ -176,61 +173,6 @@ class Compiler
     end
   end
 
-  def parse_defn( path, defn, article)
-    debug_hook( article)
-    verb = nil
-    entry = nil
-    lineno = readlines( path, defn, article) do |lineno, line|
-      if /^\s/ =~ line
-        if entry
-          entry << line
-        else
-          article.error( lineno, "Data before directive")
-          return
-        end
-      elsif line.strip == ""
-        if entry
-          entry << ""
-        else
-          article.error( lineno, "Data before directive")
-          return
-        end
-      elsif m = /^(.*):$/.match( line)
-        if verb
-          return if not parse_verb( verb, strip( entry), article, lineno)
-        end
-        verb = m[1]
-        entry = []
-      else
-        # DEBUG
-        #dump = []
-        #line.bytes.each { |b| dump << b}
-        #p dump
-        article.error( lineno, "Syntax error")
-        return []
-      end
-    end
-
-    if verb
-      parse_verb( verb, strip(entry), article, lineno)
-    end
-  end
-
-  def parse_verb( verb, entry, article, lineno)
-    lineno += (1 - entry.size)
-    while entry.size > 0 and entry[-1] == ""
-      entry = entry[0..-2]
-    end
-
-    begin
-      @commands.send( verb.to_sym, self, article, lineno, entry)
-      true
-    # rescue NoMethodError => bang
-    #   article.error( lineno, 'Unsupported directive: ' + verb)
-    #   false
-    end
-  end
-
   def prepare( article)
     debug_hook( article)
 
@@ -244,50 +186,6 @@ class Compiler
     article.children.each do |child|
       prepare( child)
     end
-  end
-
-  def purify( data, dump)
-    File.open( dump, "w") do |f|
-      data.force_encoding( 'UTF-8')
-      f.write data.encode( 'US-ASCII',
-                           :invalid => :replace, :undef => :replace, :universal_newline => true)
-    end
-  end
-
-  def readlines( path, defn, article)
-    lineno = 0
-    file = @source + path + "/" + defn
-    #puts get_encoding( path, defn)
-    #f = File.open( file,
-    #			   :mode => "r",
-    #              :encoding => get_encoding( path, defn))
-
-    begin
-      data = IO.binread( file)
-      if not data.ascii_only?
-        article.error( lineno, "Not ASCII data")
-        purify( data, file+".tmp")
-        return lineno
-      end
-
-      data.split("\n").each do |line|
-        line = line.chomp
-        if line.size == 0
-          lineno = lineno + 1
-          yield lineno, line
-        else
-          line.split( "\r").each do |subline|
-            lineno = lineno + 1
-            yield lineno, subline.rstrip.gsub("\t", '  ')
-          end
-        end
-      end
-    rescue StandardError => bang
-      puts bang.message + "\n" + bang.backtrace.join("\n")
-      article.error( lineno, bang.message)
-      raise
-    end
-    lineno
   end
 
   def regenerate( parents, article)
@@ -327,12 +225,6 @@ class Compiler
 # Helper methods
 # =================================================================
 
-  def begins( text, header)
-    return nil if text.size < header.size
-    return nil if text[0...header.size] != header
-    text[ header.size..-1]
-  end
-
   def error( path, lineno, msg)
     @errors = @errors + 1
     lineref = lineno ? ":#{lineno}" : ""
@@ -341,22 +233,6 @@ class Compiler
 
   def errors?
     @errors > 0
-  end
-
-  def get_local_links( path)
-    links = {}
-
-    Dir.entries( path).each do |f|
-      next if /^\./ =~ f
-      next if /^index\./ =~ f
-      if m = /^(.*)\.(txt|yaml)$/.match( f)
-        links[m[1]] = ["#{m[1]}.html"]
-      elsif File.directory?( "#{path}/#{f}")
-        links[f] = ["#{f}/index.html"]
-      end
-    end
-
-    links
   end
 
   def is_source_file?( file)

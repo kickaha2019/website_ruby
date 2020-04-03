@@ -64,36 +64,6 @@ class Article
     @markdown = Markdown.new( defn)
   end
 
-  def add_text_line( lineno, line, sep, lines)
-    return if line == ""
-    if i = line.index( "[")
-      add_text_line( lineno, line[0..(i-1)], "", lines) if i > 0
-            line = line[(i+1)..-1]
-      if j = line.index( "]")
-                if j > 0
-                    lines << HTMLPageLink.new( self, lineno, line[0..(j-1)])
-                    if (j+1) >= line.size
-                        lines << HTMLPageTextLine.new( self, lineno, sep)
-                    else
-                        add_text_line( lineno, line[(j+1)..-1], sep, lines)
-                    end
-                else
-                    error( lineno, "Empty link")
-                end
-      else
-        error( lineno, "Mismatched []")
-      end
-    elsif line.index( "]")
-      error( lineno, "Mismatched []")
-    else
-      line = encode_special_chars( line)
-      while m = /^([^']*)''([^']*)''(.*)$/.match( line)
-        line = m[1] + "<B>" + m[2] + "</B>" + m[3]
-      end
-      lines << HTMLPageTextLine.new( self, lineno, line + sep)
-    end
-  end
-
   def children
     if not @children_sorted
       @children = sort( @children)
