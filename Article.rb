@@ -5,7 +5,6 @@
 =end
 
 require 'fileutils'
-require 'content_start'
 require 'image'
 require "markdown.rb"
 
@@ -30,7 +29,6 @@ class Article
     @source_filename = source
     @sink_filename   = sink
     @seen_links      = {}
-    @content         = []
     @children        = []
     @children_sorted = true
     @images          = []
@@ -38,7 +36,6 @@ class Article
     @errors          = []
     @markdown        = nil
 
-    add_content( ContentStart.new)
     set_title( name)
   end
 
@@ -50,10 +47,6 @@ class Article
       @children_sorted = false
     end
     @children << article
-  end
-
-  def add_content( block)
-    @content << block
   end
 
   def add_image( compiler, lineno, image, caption)
@@ -169,15 +162,11 @@ class Article
   end
 
   def has_any_content?
-    return true if @markdown
-    text_chars = 0
-    @content.each {|item| text_chars += item.text_chars}
-    text_chars > 0
+    ! @markdown.nil?
   end
 
   def has_much_content?
     text_chars = @markdown ? @markdown.text_chars : 0
-    @content.each {|item| text_chars += item.text_chars}
     text_chars > 80
   end
 
@@ -204,10 +193,6 @@ class Article
   def index( parents, html, pictures)
     wrap = @markdown ? @markdown.wrap? : true
     wrap = false if /\.php$/ =~ @sink_filename
-
-    @content.each do |item|
-      wrap = false unless item.wrap?
-    end
 
     if @children.size > 0
       to_index = children
@@ -447,9 +432,34 @@ class Article
   def to_html( parents, html)
     html.start_page( html.title)
 
-    @content.each do |item|
-      item.process( self, parents, html)
+    if has_picture_page?
+      html.set_max_floats( images.size)
+      html.breadcrumbs( parents, title, true)
+    else
+      html.breadcrumbs( parents, title, false) if parents.size > 0
     end
+    html.start_div( 'payload content')
+
+    index( parents, html, images.size > 1)
+
+    if has_any_content?
+      html.start_div( 'story t1')
+    end
+
+    if (images.size == 1) && (! has_picture_page?)
+      prepare_source_images( html, false)
+    end
+
+    if has_any_content? && @date
+      html.date( @date) do |error|
+        error( lineno, error)
+      end
+    end
+
+    # @content.each do |item|
+    #   item.process( self, parents, html)
+    # end
+
     @markdown.process( self, parents, html) if @markdown
 
     if (@images.size > 1) && (! has_picture_page?)
@@ -464,7 +474,7 @@ class Article
       end
     end
 
-    if @content.size > 1
+    if has_any_content?
       html.end_div
     end
     html.end_div

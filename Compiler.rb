@@ -150,7 +150,6 @@ class Compiler
     if date = defn['date']
       t = convert_date( article, 0, date)
       article.set_date( t)
-      article.add_content( Date.new( t))
     end
 
     if icon = defn['icon']
