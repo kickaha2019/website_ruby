@@ -50,14 +50,6 @@ class HTML
     end_div
   end
 
-  def add_index_title( text)
-    start_cell
-    start_div 'title'
-    write( text)
-    end_div
-    end_cell
-  end
-
   def breadcrumbs( parents, title, pictures_link)
     start_div( 'breadcrumbs t0 content')
     parents.each do |parent|
@@ -95,16 +87,6 @@ class HTML
     end
   end
 
-  def code( lines)
-    start_div( 'code')
-    sep = ''
-    lines.each do |line|
-      @output << (sep + encode_special_chars( line).gsub( " ", "&nbsp;"))
-      sep = "<BR>"
-    end
-    @output << "</div>"
-  end
-
   def date( time)
     start_div( 'date')
     @output << format_date( time) + "</DIV>"
@@ -112,14 +94,6 @@ class HTML
 
   def dimensions( key)
     @compiler.dimensions( key)
-  end
-
-  def disable_float( float)
-    write_css( ".f#{float} {display: none}")
-  end
-
-  def dump
-    p [@path, @output.size]
   end
 
   def encode_special_chars( text)
@@ -137,14 +111,6 @@ class HTML
     @output << "</div>"
   end
 
-  def end_gallery
-    @output << "</div>"
-  end
-
-  def end_grid
-    @output << "</div>"
-  end
-
   def end_index
     @output << "</div>"
   end
@@ -157,18 +123,6 @@ class HTML
     @compiler.template('footer').each do |line|
       @output << line
     end
-  end
-
-  def end_table
-    @output << "</table></div>"
-  end
-
-  def end_table_cell
-    @output << "</TD>"
-  end
-
-  def end_table_row
-    @output << "</TR>"
   end
 
   def finish
@@ -215,12 +169,6 @@ class HTML
         "th"
     end
     date.strftime( "%A, ") + date.day.to_s + ord + date.strftime( " %B %Y")
-  end
-
-  def heading( text)
-    @output << '<div class="heading">'
-    write( text)
-    @output << '</div>'
   end
 
   def html( lines)
@@ -285,22 +233,10 @@ class HTML
     end
   end
 
-  def nbsp
-    @output << '&nbsp;'
-  end
-
   def no_indexes
     @compiler.template('no_indexes').each do |line|
       write_css( line)
     end
-  end
-
-  def php( lines)
-    @output << "<?php"
-    lines.each do |line|
-      @output << line
-    end
-    @output << "?>"
   end
 
   def picture_rp
@@ -354,10 +290,6 @@ class HTML
   def start
   end
 
-  def start_code
-    start_div( 'code')
-  end
-
   def start_cell
     start_div( 'cell')
   end
@@ -383,40 +315,6 @@ class HTML
       end
       @output << line.gsub( '$TITLE$', title).gsub( '$SITE$', rp)
     end
-  end
-
-  def start_table( css_class)
-    start_div( 'table')
-    @output << "<TABLE CLASS=\"#{css_class}\">"
-  end
-
-  def start_table_cell
-    @output << "<TD>"
-  end
-
-  def start_table_row
-    @output << "<TR>"
-  end
-
-  def text( parents, lines)
-    written, float = 0, true
-    start_div( 'text')
-
-    lines.each do |line|
-      if line.strip == ''
-        @output << '<BR><BR>'
-        written += 50
-        if written > 300
-          written, float = 0, true
-        end
-      else
-        insert_float if float
-        float = false
-        write( line)
-        written += line.size
-      end
-    end
-    @output << "</DIV>"
   end
 
   def title

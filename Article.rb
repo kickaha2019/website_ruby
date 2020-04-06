@@ -35,6 +35,7 @@ class Article
     @icon            = nil
     @errors          = []
     @markdown        = nil
+    @date            = nil
 
     set_title( name)
   end
@@ -170,11 +171,12 @@ class Article
     text_chars > 80
   end
 
-  def has_picture_page?
-    return false if @images.size == 0
-    return true if (@images.size >= 2) && has_much_content?
-    return true if @children.size > 0
-    false
+  def has_picture_page?( parents)
+    return false              if @images.size == 0
+    return has_much_content?  if @images.size >= 2
+    return true               if @children.size > 0
+    return false              if @date.nil?
+    ! parents[-1].date.nil?
   end
 
   def icon
@@ -287,9 +289,9 @@ class Article
     m[1] + '_pictures.html'
   end
 
-  def prepare( compiler)
+  def prepare( compiler, parents)
     if @markdown
-      if has_picture_page?
+      if has_picture_page?( parents)
         float_points = @markdown.get_float_points
         dims = compiler.dimensions( 'icon')
         limit = (float_points.size > @images.size) ? @images.size : float_points.size
@@ -432,7 +434,7 @@ class Article
   def to_html( parents, html)
     html.start_page( html.title)
 
-    if has_picture_page?
+    if has_picture_page?( parents)
       html.set_max_floats( images.size)
       html.breadcrumbs( parents, title, true)
     else
@@ -446,7 +448,7 @@ class Article
       html.start_div( 'story t1')
     end
 
-    if (images.size == 1) && (! has_picture_page?)
+    if (images.size == 1) && (! has_picture_page?( parents))
       prepare_source_images( html, false)
     end
 
@@ -456,13 +458,9 @@ class Article
       end
     end
 
-    # @content.each do |item|
-    #   item.process( self, parents, html)
-    # end
-
     @markdown.process( self, parents, html) if @markdown
 
-    if (@images.size > 1) && (! has_picture_page?)
+    if (@images.size > 1) && (! has_picture_page?( parents))
       prepare_source_images( html, true)
     end
 

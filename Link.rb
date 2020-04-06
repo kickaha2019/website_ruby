@@ -29,7 +29,7 @@ class Link
 		false
 	end
 
-	def prepare( compiler)
+	def prepare( compiler, parents)
 		bound, error = compiler.find_article( @link)
 		if bound
 			@date          = bound.date

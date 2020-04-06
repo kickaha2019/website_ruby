@@ -62,7 +62,7 @@ class Compiler
     sync_resources( @source + '/resources', @sink + '/resources', /\.(png|css|jpg)$/)
 
     # Prepare the articles now all articles parsed
-    prepare( @articles)
+    prepare( [], @articles)
 
     # Regenerate the HTML files
     regenerate( [], @articles)
@@ -191,18 +191,18 @@ class Compiler
     end
   end
 
-  def prepare( article)
+  def prepare( parents, article)
     debug_hook( article)
 
     begin
-      article.prepare( self)
+      article.prepare( self, parents)
     rescue Exception => bang
       article.error( 0, bang.message)
       raise
     end
 
     article.children.each do |child|
-      prepare( child)
+      prepare( parents + [article], child)
     end
   end
 
@@ -218,7 +218,7 @@ class Compiler
       end
 #    end
 
-    if article.has_picture_page?
+    if article.has_picture_page?( parents)
       html = HTML.new( self, @sink, article.picture_sink_filename)
       html.start
       article.to_pictures( parents, html)
