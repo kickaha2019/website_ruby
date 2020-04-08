@@ -10,18 +10,8 @@ class HTML
     @output       = []
     @css          = []
     @error        = nil
-    @float_height = 10
-    @floats       = []
     @sink         = sink
-    @div_id       = nil
-    @max_floats   = 0
     @local_links = {}
-  end
-
-  def add_float( img, w, h, classes, caption, float)
-    @compiler.record( img)
-    rp = relative_path( @path, img)
-    @output[@floats[float]] += "\n<IMG CLASS=\"#{classes}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" SRC=\"#{rp}\" ALT=\"#{caption}\">"
   end
 
   def add_caption( caption)
@@ -184,13 +174,6 @@ class HTML
     @output << "<IMG CLASS=\"#{inject}\" SRC=\"#{rp}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" ALT=\"#{alt_text}\">"
   end
 
-  def insert_float
-    return if @floats.size >= @max_floats
-    @floats << @output.size
-    @output << "<A CLASS=\"#{((@floats.size % 2) == 0) ? 'left' : 'right'}\" HREF=\"#{picture_rp}\">"
-    @output << '</A>'
-  end
-
   def link( defn)
     if @local_links[defn]
       ref, text = @local_links[defn], defn
@@ -271,10 +254,6 @@ class HTML
     end
     rp = ((from.collect { ".."}) + to).join( "/")
     (rp == '') ? '.' : rp
-  end
-
-  def set_max_floats( n)
-    @max_floats = n
   end
 
   def sink_filename( path)

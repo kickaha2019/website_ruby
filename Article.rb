@@ -162,6 +162,23 @@ class Article
     end
   end
 
+  def get_scaled_dims( dims, images)
+    scaled_dims = []
+
+    dims.each do |dim|
+      min_height = 20000
+
+      images.each do |image|
+        height = image.scaled_height( dim)
+        min_height = height if height < min_height
+      end
+
+      scaled_dims << [dim[0], min_height]
+    end
+
+    scaled_dims
+  end
+
   def has_any_content?
     ! @markdown.nil?
   end
@@ -246,21 +263,12 @@ class Article
 
   def index_using_images( to_index, html)
     dims = html.dimensions( 'icon')
-    scaled_dims = []
     backstop = BackstopIcon.new( html.sink_filename( "/resources/down_cyan.png"))
     backstop_bw = BackstopIcon.new( html.sink_filename( "/resources/down_bw.png"))
-
-    dims.each do |dim|
-      min_height = 20000
-
-      to_index.each do |child|
-        icon = child.icon ? child.icon : backstop
-        height = icon.scaled_height( dim)
-        min_height = height if height < min_height
-      end
-
-      scaled_dims << [dim[0], min_height]
-    end
+    scaled_dims = get_scaled_dims( dims,
+                                   to_index.collect do |child|
+                                     child.icon ? child.icon : backstop
+                                   end)
 
     to_index.each do |child|
       icon = child.icon ? child.icon : ((child == self) ? backstop_bw : backstop)
@@ -435,7 +443,6 @@ class Article
     html.start_page( html.title)
 
     if has_picture_page?( parents)
-      html.set_max_floats( images.size)
       html.breadcrumbs( parents, title, true)
     else
       html.breadcrumbs( parents, title, false) if parents.size > 0
@@ -462,14 +469,6 @@ class Article
 
     if (@images.size > 1) && (! has_picture_page?( parents))
       prepare_source_images( html, true)
-    end
-
-    dims = html.dimensions( 'icon')
-    @images.each_index do |i|
-      next if i >= html.floats.size
-      @images[i].prepare_images( dims, :prepare_source_image) do |image, w, h, sizes|
-        html.add_float( image, w, h, sizes, @images[i].caption, i)
-      end
     end
 
     if has_any_content?

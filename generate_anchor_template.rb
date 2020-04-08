@@ -67,7 +67,9 @@ class GenerateAnchorTemplate
   def parse_kml_xml( path)
     doc = REXML::Document.new IO.read( path)
     REXML::XPath.each( doc, "//Placemark") do |place|
-      entry = @anchors[ place.elements['name'].text.strip]
+      name = place.elements['name'].text.strip
+      entry = @anchors[name]
+      raise "#{name} already defined in #{path}" unless entry[:lat].nil?
       coords = place.elements['Point'].elements['coordinates'].text.strip.split(',')
       entry[:lat] = coords[1].to_f
       entry[:lon] = coords[0].to_f
