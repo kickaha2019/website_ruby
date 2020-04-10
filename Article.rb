@@ -300,22 +300,7 @@ class Article
   def prepare( compiler, parents)
     if @markdown
       if has_picture_page?( parents)
-        float_points = @markdown.get_float_points
-        dims = compiler.dimensions( 'icon')
-        limit = (float_points.size > @images.size) ? @images.size : float_points.size
-
-        @images.each_index do |rindex|
-          next if rindex >= float_points.size
-          index = limit - 1 - rindex
-          raw = ["<A CLASS=\"#{((index % 2) == 1) ? 'left' : 'right'}\" HREF=\"#{picture_rp}\">"]
-          @images[index].prepare_images( dims, :prepare_source_image) do |image, w, h, sizes|
-            compiler.record( image)
-            rp = HTML::relative_path( @sink_filename, image)
-            raw << "<IMG CLASS=\"#{sizes}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" SRC=\"#{rp}\" ALT=\"#{@images[index].caption}\">"
-          end
-          raw << '</A>'
-          @markdown.inject( float_points[index], raw.join(''))
-        end
+        @markdown.prepare_floats( compiler, self)
       end
       @markdown.prepare( compiler, self)
     end

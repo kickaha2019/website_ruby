@@ -2,8 +2,9 @@ require 'article_renderer'
 
 class Markdown
   def initialize( defn)
-    @doc = CommonMarker.render_doc( defn, [:UNSAFE], [:table])
-    @html = []
+    @doc      = CommonMarker.render_doc( defn, [:UNSAFE], [:table])
+    @html     = []
+    @rotates  = []
     @injected = {}
   end
 
@@ -47,13 +48,86 @@ class Markdown
   end
 
   def prepare( compiler, article)
-
-    # Generate HTML from parse tree
     renderer = ArticleRenderer.new( compiler, article, @injected)
     @html = renderer.to_html( @doc)
   end
 
+  def prepare_float( compiler, article, images, points, pi)
+    raw = ["<A CLASS=\"#{((pi % 2) == 1) ? 'left' : 'right'}\" HREF=\"#{article.picture_rp}\">"]
+    size_rotates = {}
+    dims = article.get_scaled_dims( compiler.dimensions( 'icon'), images)
+    id = ''
+
+    images.each_index do |index|
+      images[index].prepare_images( dims, :prepare_thumbnail, nil) do |image, w, h, sizes|
+        compiler.record( image)
+        rp = HTML::relative_path( article.sink_filename, image)
+        if images.size > 1
+          if size_rotates[sizes].nil?
+            size_rotates[sizes] = @rotates.size
+            @rotates << []
+          end
+          @rotates[size_rotates[sizes]] << rp
+          id = " ID=\"image#{size_rotates[sizes]}\""
+        end
+        if index == 0
+          raw << "<IMG #{id} CLASS=\"#{sizes}\" SRC=\"#{rp}\" ALT=\"#{images[index].caption}\">"
+        end
+      end
+    end
+
+    raw << '</A>'
+    inject( points[pi], raw.join(''))
+  end
+
+  def prepare_floats( compiler, article)
+    points = get_float_points
+
+    if article.images.size <= points.size
+      article.images.each_index do |index|
+        prepare_float( compiler, article, [article.images[index]], points, index)
+      end
+    else
+      per_float = (article.images.size / points.size).to_i
+      from      = 0
+
+      points.each_index do |index|
+        to = from + per_float
+        to = to + 1 if (article.images.size - to) > per_float * (points.size - index)
+        prepare_float( compiler, article, article.images[from...to], points, index)
+        from = to
+      end
+    end
+  end
+
   def process( article, parents, html)
+    if @rotates.size > 0
+      script = ['<SCRIPT>']
+      @rotates.each_index do |i|
+        script << "var index#{i} = 0;"
+        images = ["var images#{i} = "]
+        separ  = '['
+        @rotates[i].each do |image|
+          images << separ
+          images << "\"#{image}\""
+          separ = ','
+        end
+        images << '];'
+        script << images.join('')
+      end
+      script << "function change_images() {"
+      @rotates.each_index do |i|
+        script << "  index#{i} = index#{i} + 1;"
+        script << "  if (index#{i} >= images#{i}.length) {index#{i} = 0;}"
+        script << "  document.getElementById(\"image#{i}\").src=images#{i}[index#{i}];"
+      end
+      script << "}"
+      script << "setInterval( change_images, 3000);"
+      script << "</SCRIPT>"
+
+      html.script( script.join("\n"))
+    end
+
     html.html( [@html])
   end
 

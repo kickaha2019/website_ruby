@@ -256,6 +256,16 @@ class HTML
     (rp == '') ? '.' : rp
   end
 
+  def script( script)
+    @output.each_index do |i|
+      if @output[i] == '<script></script>'
+        @output[i] = script
+        return
+      end
+    end
+    raise "Unable to find where to inject script into HTML"
+  end
+
   def sink_filename( path)
     @compiler.sink_filename( path)
   end
