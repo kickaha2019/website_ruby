@@ -174,48 +174,6 @@ class HTML
     @output << "<IMG CLASS=\"#{inject}\" SRC=\"#{rp}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" ALT=\"#{alt_text}\">"
   end
 
-  def link( defn)
-    if @local_links[defn]
-      ref, text = @local_links[defn], defn
-    elsif @compiler.link( defn)
-      ref, text = @compiler.link( defn), defn
-    else
-      els = defn.split(' ')
-      if els.size < 2
-        @error = "Bad link: #{defn}"
-        return ''
-      end
-
-      ref, text = els[0], els[1..-1].join(' ')
-      unless /^(http:|https:|mailto:|\/)/ =~ ref
-        ref, error = @compiler.find_article( ref)
-        if error
-          @error = "Bad link: #{defn} - #{error}"
-          return ''
-        end
-      end
-      @local_links[text] = ref
-    end
-
-    if ref.is_a?( Article)
-      rp = relative_path( @path, ref.sink_filename)
-      "<A HREF=\"#{rp}\">#{check(text)}</A>"
-    elsif /^http/ =~ ref
-      target = (/maps\.apple\.com/ =~ ref) ? '' : 'TARGET="_blank" '
-      "<A HREF=\"#{ref}\" #{target}REL=\"nofollow\">#{check(text)}</A>"
-    elsif /^\// =~ ref
-      rp = relative_path( @path, ref)
-      if rp
-        "<A HREF=\"#{rp}\">#{check(text)}</A>"
-      else
-        @error = "Bad link: #{ref} #{defn}"
-        ''
-      end
-    else
-      "<A HREF=\"#{ref}\">#{check(text)}</A>"
-    end
-  end
-
   def no_indexes
     @compiler.template('no_indexes').each do |line|
       write_css( line)
@@ -312,14 +270,7 @@ class HTML
 
   def write( line)
     line = encode_special_chars( line)
-    while m = /^([^\[]*)\[([^\]]*)\](.*)$/.match( line)
-      line = m[1] + link( m[2]) + m[3]
-    end
-    while m = /^([^']*)''([^']*)''(.*)$/.match( line)
-      line = m[1] + "<B>" + m[2] + "</B>" + m[3]
-    end
     @output << check( line)
-#		@output << check(text)
   end
 
   def write_css( line)

@@ -13,7 +13,7 @@ class Link
 		@link          = link
 		@title         = title
 		@date          = nil
-    @icon          = nil
+    @icon_source   = nil
     @sink_filename = nil
 	end
 
@@ -29,11 +29,15 @@ class Link
 		false
 	end
 
+	def icon
+		@icon_source.icon
+	end
+
 	def prepare( compiler, parents)
-		bound, error = compiler.find_article( @link)
+		bound, error = compiler.lookup( @link)
 		if bound
 			@date          = bound.date
-			@icon          = bound.icon
+			@icon_source   = bound
 			@sink_filename = bound.sink_filename
 			@title         = bound.title unless @title
 		else

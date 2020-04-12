@@ -298,6 +298,46 @@ class Article
   end
 
   def prepare( compiler, parents)
+    if @icon
+      err = nil
+
+      if /^\// =~ @icon
+        path = @icon
+      else
+        path = compiler.abs_filename( @source_filename, @icon)
+        if ! File.exists?( path)
+          path, err = compiler.lookup( @icon)
+        end
+      end
+
+      if err.nil? && File.exists?( path)
+        @icon = describe_image( compiler, 0, path, nil)
+      else
+        error( 0, err ? err : "Icon #{@icon} not found")
+        @icon = nil
+      end
+    end
+
+    defn, @images = @images, []
+    defn.each do |image|
+      err = nil
+      path = image['path'].strip
+      unless /^\// =~ path
+        path1 = compiler.abs_filename( @source_filename, path)
+        if File.exists?( path1)
+          path = path1
+        else
+          path, err = compiler.lookup( path)
+        end
+      end
+
+      if err.nil? && File.exists?( path)
+        add_image( compiler, 0, path, image['tag'])
+      else
+        error( 0, err ? err : ("Image file not found: " + image['path']))
+      end
+    end
+
     if @markdown
       if has_picture_page?( parents)
         @markdown.prepare_floats( compiler, self)
@@ -346,14 +386,12 @@ class Article
     @date = t if @date.nil?
   end
 
-  def set_icon( compiler, lineno, path)
-    if @icon.nil?
-      if not File.exists?( path)
-        error( 0, "Icon #{path} not found")
-      else
-        @icon = describe_image( compiler, lineno, path, nil)
-      end
-    end
+  def set_icon( path)
+    @icon = path
+  end
+
+  def set_images( images)
+    @images = images
   end
 
   def set_php

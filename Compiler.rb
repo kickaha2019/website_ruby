@@ -42,6 +42,7 @@ class Compiler
     @dimensions = YAML.load( File.open( source + "/dimensions.yaml"))
     @generated = {}
     @variables = {}
+    @key2paths = Hash.new {|h,k| h[k] = []}
   end
 
 # =================================================================
@@ -90,12 +91,14 @@ class Compiler
 
     # Article for the directory
     dir_article = Article.new( @source + path + '/index', @sink + path + '/index.html')
+    remember( path, dir_article)
     parent.add_child( dir_article) if parent
 
     # Hash of articles in this directory
     dir_articles = Hash.new do |h,k|
       a = Article.new( @source + path + '/' + k, @sink + path + '/' + k + '.html')
       dir_article.add_child( a)
+      remember( path + '/' + k, a)
       h[k] = a
     end
     dir_articles['index'] = dir_article
@@ -122,6 +125,7 @@ class Compiler
         child = dir_articles[m[1]]
         parse_yaml( path, file, child)
       elsif /\.(JPG|jpg|png|zip|rb)$/ =~ file
+        remember( path1, @source + path1)
       else
         raise "Unhandled file: #{path1}"
       end
@@ -153,12 +157,7 @@ class Compiler
     end
 
     if icon = defn['icon']
-      if /^\// =~ icon
-        article.set_icon( self, 0, icon)
-      else
-        path = abs_filename( article.source_filename, icon)
-        article.set_icon( self, 0, path)
-      end
+      article.set_icon( icon)
     end
 
     if ext = defn['extension']
@@ -170,18 +169,7 @@ class Compiler
     end
 
     if images = defn['images']
-      images.each do |image|
-        path = image['path'].strip
-        unless /^\// =~ path
-          path = abs_filename( article.source_filename, path)
-        end
-
-        if File.exists?( path)
-          article.add_image( self, 0, path, image['tag'])
-        else
-          article.error( 0, "Image file not found: " + image['path'])
-        end
-      end
+      article.set_images( images)
     end
 
     if links = defn['links']
@@ -229,6 +217,13 @@ class Compiler
 
     article.children.each do |child|
       regenerate( parents + [article], child) if child.is_a?( Article)
+    end
+  end
+
+  def remember( key, path)
+    key = key.split('/')
+    (0...key.length).each do |i|
+      @key2paths[ key[i..-1].join('/')] << path
     end
   end
 
@@ -391,28 +386,15 @@ class Compiler
     @dimensions[key]
   end
 
-  def find_article( path)
-    if /^\// =~ path
-      re = Regexp.new( "^#{@source}#{path}(|/index)$")
-    else
-      re = Regexp.new( "/#{path}(|/index)$")
-    end
-    matches = []
-    match_article_filename( @articles, re, matches)
+  def lookup( path)
+    matches = @key2paths[path]
 
     if matches.size < 1
-      return nil, "Link not found for #{path}"
+      return nil, "Path not found for #{path}"
     elsif matches.size > 1
-      return nil, "Ambiguous link for #{path}"
+      return nil, "Ambiguous path for #{path}"
     else
       return matches[0], nil
-    end
-  end
-
-  def match_article_filename( article, re, matches)
-    matches << article if re =~ article.source_filename
-    article.children.each do |child|
-      match_article_filename( child, re, matches) if child.is_a?( Article)
     end
   end
 

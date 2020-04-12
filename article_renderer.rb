@@ -29,7 +29,7 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
     else
       url = @compiler.link( node.url)
       unless url
-        ref, err = @compiler.find_article( node.url)
+        ref, err = @compiler.lookup( node.url)
         if err
           url = ''
           @article.error( 0, err)
