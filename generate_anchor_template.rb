@@ -40,8 +40,8 @@ class GenerateAnchorTemplate
 
       if File.directory?( path1)
         find_anchors(path1, target)
-      elsif /\.kml\.xml$/ =~ file
-        parse_kml_xml( path1)
+      elsif /\.kml$/ =~ file
+        parse_kml( path1)
       elsif m = /^(.*)\.yaml$/.match( file)
         defn = YAML.load( IO.read( path1))
         if defn['anchors']
@@ -64,7 +64,7 @@ class GenerateAnchorTemplate
     binding
   end
 
-  def parse_kml_xml( path)
+  def parse_kml( path)
     doc = REXML::Document.new IO.read( path)
     REXML::XPath.each( doc, "//Placemark") do |place|
       name = place.elements['name'].text.strip

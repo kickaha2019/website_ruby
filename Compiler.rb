@@ -306,7 +306,7 @@ class Compiler
         next if file == "dimensions.yaml"
         next if file == "links.yaml"
       end
-      next if /\.kml\.xml$/ =~ file
+      next if /\.kml$/ =~ file
       next if /\.(afphoto|command|erb|pdf)$/ =~ file
 
         #next if file == "index.txt"
