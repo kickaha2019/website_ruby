@@ -12,9 +12,14 @@ class Link
 		@lineno        = lineno
 		@link          = link
 		@title         = title
+		@blurb         = nil
 		@date          = nil
     @icon_source   = nil
     @sink_filename = nil
+	end
+
+	def blurb
+		@blurb
 	end
 
 	def children
@@ -36,6 +41,7 @@ class Link
 	def prepare( compiler, parents)
 		bound, error = compiler.lookup( @link)
 		if bound
+			@blurb         = bound.blurb
 			@date          = bound.date
 			@icon_source   = bound
 			@sink_filename = bound.sink_filename

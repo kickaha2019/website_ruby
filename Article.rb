@@ -9,7 +9,7 @@ require 'image'
 require "markdown.rb"
 
 class Article
-  attr_accessor :content_added, :images, :sink_filename, :content
+  attr_accessor :content_added, :images, :sink_filename, :blurb
 
   class BackstopIcon < Image
     def initialize( sink)
@@ -36,6 +36,7 @@ class Article
     @errors          = []
     @markdown        = nil
     @date            = nil
+    @blurb           = nil
 
     set_title( name)
   end
@@ -256,6 +257,7 @@ class Article
     alt_text = prettify( page.title)
 
     html.begin_index( target)
+    html.add_blurb( page.blurb) unless (page == self) || page.blurb.nil?
     image.prepare_images( dims, :prepare_thumbnail, page == self) do |file, w, h, sizes|
       html.image( file, w, h, alt_text, sizes)
     end
@@ -381,6 +383,10 @@ class Article
 
   def report_errors( compiler)
     @errors.each {|err| compiler.error( * err)}
+  end
+
+  def set_blurb( b)
+    @blurb = b
   end
 
   def set_date( t)

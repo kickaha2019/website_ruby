@@ -14,6 +14,12 @@ class HTML
     @local_links = {}
   end
 
+  def add_blurb( blurb)
+    @output << '<SPAN CLASS="tooltiptext">'
+    write( blurb)
+    @output << '</SPAN>'
+  end
+
   def add_caption( caption)
     @output << '<DIV>'
     write( caption)
@@ -26,7 +32,7 @@ class HTML
   end
 
   def begin_index( target)
-    @output << "<A CLASS=\"index t0\" HREF=\"#{relative_path( @path, target)}\">" if target
+    @output << "<A CLASS=\"index t0 tooltip\" HREF=\"#{relative_path( @path, target)}\">" if target
     start_div( "index t0") unless target
   end
 

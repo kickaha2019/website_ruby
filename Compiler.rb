@@ -151,6 +151,10 @@ class Compiler
       end
     end
 
+    if blurb = defn['blurb']
+      article.set_blurb( blurb)
+    end
+
     if date = defn['date']
       t = convert_date( article, 0, date)
       article.set_date( t)
