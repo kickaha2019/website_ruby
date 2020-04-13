@@ -252,13 +252,14 @@ class Article
   end
 
   def index_resource( html, page, image, dims)
+    target = (page == self) ? nil : page.sink_filename
+    alt_text = prettify( page.title)
+
+    html.begin_index( target)
     image.prepare_images( dims, :prepare_thumbnail, page == self) do |file, w, h, sizes|
-      html.add_index( file,
-                      w, h,
-                      sizes,
-                      (page == self) ? nil : page.sink_filename,
-                      prettify( page.title))
+      html.image( file, w, h, alt_text, sizes)
     end
+    html.end_index( target, alt_text)
   end
 
   def index_using_images( to_index, html)

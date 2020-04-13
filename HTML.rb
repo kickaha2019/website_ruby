@@ -20,24 +20,14 @@ class HTML
     @output << '</DIV>'
   end
 
-  def add_index( img, w, h, sizes, target, alt_text)
-    @output << "<A CLASS=\"index t0 #{sizes}\" HREF=\"#{relative_path( @path, target)}\">" if target
-    start_div( "index t0 #{sizes}") unless target
-    start_div
-    image( img, w, h, alt_text)
-    end_div
-    start_div
-    @output << '<span>' unless target
-    write( alt_text)
-    @output << '</span>' unless target
-    end_div
-    end_div unless target
-    @output << "</A>" if target
-  end
-
   def add_index_dummy
     start_div 'index dummy size1 size2 size3'
     end_div
+  end
+
+  def begin_index( target)
+    @output << "<A CLASS=\"index t0\" HREF=\"#{relative_path( @path, target)}\">" if target
+    start_div( "index t0") unless target
   end
 
   def breadcrumbs( parents, title, pictures_link)
@@ -101,8 +91,14 @@ class HTML
     @output << "</div>"
   end
 
-  def end_index
-    @output << "</div>"
+  def end_index( target, alt_text)
+    start_div
+    @output << '<span>' unless target
+    write( alt_text)
+    @output << '</span>' unless target
+    end_div
+    end_div unless target
+    @output << "</A>" if target
   end
 
   def end_indexes
@@ -171,7 +167,7 @@ class HTML
     @compiler.record( file)
     alt_text = 'TTBA' unless alt_text
     rp = relative_path( @path, file)
-    @output << "<IMG CLASS=\"#{inject}\" SRC=\"#{rp}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" ALT=\"#{alt_text}\">"
+    @output << "<IMG CLASS=\"#{inject.strip}\" SRC=\"#{rp}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" ALT=\"#{alt_text}\">"
   end
 
   def no_indexes
