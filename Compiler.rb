@@ -28,7 +28,6 @@ load "Link.rb"
 
 class Compiler
   @@default_date = Time.gm( 1970, "Jan", 1)
-  attr_reader :title
 
   # Initialisation
   def initialize( source, sink, debug_pages=nil)
@@ -56,7 +55,6 @@ class Compiler
     load_templates
 
     # Parse all the articles recursively
-    @title = load_parameters( "")['TITLE']
     @articles = parse( nil, "")
 
     # Sync the resource files
@@ -84,11 +82,6 @@ class Compiler
   # Parse the articles
   def parse( parent, path)
 
-    # Skip special directories
-    return if ['/resources', '/templates', '/fileinfo'].include?( path)
-
-    source = list_dir( @source + path)
-
     # Article for the directory
     dir_article = Article.new( @source + path + '/index', @sink + path + '/index.html')
     remember( path, dir_article)
@@ -103,16 +96,10 @@ class Compiler
     end
     dir_articles['index'] = dir_article
 
-    # Delete any .tmp files in current directory
-    source.each do |file|
-      if /\.tmp$/ =~ file
-        File.delete( @source + path + "/" + file)
-      end
-    end
-
     # Loop over source files - skip image files and other specials
-    source.each do |file|
-      next if ['resources', 'templates', 'fileinfo'].include?( file)
+    Dir.entries( @source + path).each do |file|
+      next if /^\./ =~ file
+      next if (path == '') && ['resources', 'templates', 'fileinfo', 'README.md','dimensions.yaml','links.yaml'].include?( file)
       path1 = path + "/" + file
 
       if File.directory?( @source + path1)
@@ -124,7 +111,7 @@ class Compiler
       elsif m = /^(.*)\.yaml$/.match( file)
         child = dir_articles[m[1]]
         parse_yaml( path, file, child)
-      elsif /\.(JPG|jpg|png|zip|rb)$/ =~ file
+      elsif /\.(JPG|jpg|JPEG|jpeg|png|zip|rb|kml|afphoto|command|erb|pdf)$/ =~ file
         remember( path1, @source + path1)
       else
         raise "Unhandled file: #{path1}"
@@ -278,6 +265,10 @@ class Compiler
     end
   end
 
+  def dimensions( key)
+    @dimensions[key]
+  end
+
   def error( path, lineno, msg)
     @errors = @errors + 1
     lineref = lineno ? ":#{lineno}" : ""
@@ -288,56 +279,12 @@ class Compiler
     @errors > 0
   end
 
-  def is_source_file?( file)
-    file[0..(@source.size)] == (@source + '/')
+  def fileinfo( filename)
+    @source + '/fileinfo/' + filename.gsub('/','_')
   end
 
   def link( ref)
     @links[ref]
-  end
-
-  # List files in a directory
-  def list_dir( path)
-    files = []
-    d = Dir.new( path)
-    d.each { |file|
-      next if /^\./ =~ file
-      raise "Error" if file == "." or file == ".."
-      next if file == ".DS_Store"
-      next if file == "parameters.txt"
-      if path == @source
-        next if file == "README.md"
-        next if file == "dimensions.yaml"
-        next if file == "links.yaml"
-      end
-      next if /\.kml$/ =~ file
-      next if /\.(afphoto|command|erb|pdf)$/ =~ file
-
-        #next if file == "index.txt"
-      next if /\.timestamp$/ =~ file
-      if / / =~ file
-        raise "Spaces in name at #{path}/#{file}"
-      end
-      files.push( file)
-    }
-    d.close
-    files
-  end
-
-  def load_parameters( path)
-    if File.exists?( @source + path + "/parameters.txt")
-      params = {}
-      IO.readlines( @source + path + "/parameters.txt").each do |line|
-        if m = /^(.*)=(.*)$/.match( line.chomp)
-          if m[1].strip == 'STYLESHEET' and params[ 'STYLESHEET']
-            params[ 'STYLESHEET'] = params[ 'STYLESHEET'] + "\t" + m[2].strip
-          else
-            params[ m[1].strip] = m[2].strip
-          end
-        end
-      end
-    end
-    params
   end
 
   def load_templates
@@ -355,41 +302,6 @@ class Compiler
     puts message
   end
 
-  def sink_filename( file)
-    if is_source_file?( file)
-      return @sink + file[(@source.size)..-1]
-    end
-    if m = /^(\/resources\/)(.*)$/.match( file)
-      return @sink + m[1] + @variables[m[2]]
-    end
-    file
-  end
-
-  def source
-    @source
-  end
-
-  def strip( lines)
-    indent = 100
-    lines.each do |line|
-      if m = /^(\s*)\S/.match( line)
-        li = m[1].size
-        indent = li if li < indent
-      end
-    end
-    lines.collect do |line|
-      (line.size > indent) ? line[indent..-1] : ''
-    end
-  end
-
-  def fileinfo( filename)
-    @source + '/fileinfo/' + filename.gsub('/','_')
-  end
-
-  def dimensions( key)
-    @dimensions[key]
-  end
-
   def lookup( path)
     matches = @key2paths[path]
 
@@ -400,6 +312,16 @@ class Compiler
     else
       return matches[0], nil
     end
+  end
+
+  def sink_filename( file)
+    if file[0..(@source.size)] == (@source + '/')
+      return @sink + file[(@source.size)..-1]
+    end
+    if m = /^(\/resources\/)(.*)$/.match( file)
+      return @sink + m[1] + @variables[m[2]]
+    end
+    file
   end
 
   def tidy_up( path)

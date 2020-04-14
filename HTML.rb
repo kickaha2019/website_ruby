@@ -266,10 +266,6 @@ class HTML
     end
   end
 
-  def title
-    @compiler.title
-  end
-
   def write( line)
     line = encode_special_chars( line)
     @output << check( line)

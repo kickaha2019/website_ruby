@@ -460,7 +460,7 @@ class Article
   end
 
   def to_pictures( parents, html)
-    html.start_page( html.title)
+    html.start_page( parents[0].title)
     html.breadcrumbs( parents + [self], 'Pictures', false)
     html.start_div( 'payload content')
     index( parents, html, false)
@@ -470,7 +470,7 @@ class Article
   end
 
   def to_html( parents, html)
-    html.start_page( html.title)
+    html.start_page( parents[0] ? parents[0].title : @title)
 
     if has_picture_page?( parents)
       html.breadcrumbs( parents, title, true)
