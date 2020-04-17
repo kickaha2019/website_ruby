@@ -1,7 +1,9 @@
 require 'erb'
 require 'yaml'
+require 'utils'
 
 class HTML
+  include Utils
   attr_reader :floats
 
   def initialize( compiler, sink, path)
@@ -40,9 +42,9 @@ class HTML
     start_div( 'breadcrumbs t0 content')
     parents.each do |parent|
       rp = relative_path( @path, parent.sink_filename)
-      @output << "<A HREF=\"#{rp}\">#{HTML.prettify( parent.title)}</A> &raquo; "
+      @output << "<A HREF=\"#{rp}\">#{prettify( parent.title)}</A> &raquo; "
     end
-    @output << '<SPAN>' + check( HTML.prettify(title)) + '</SPAN>'
+    @output << '<SPAN>' + check( prettify(title)) + '</SPAN>'
     if pictures_link
       @output << " &raquo; <A HREF=\"#{picture_rp}\">Pictures</A>"
     end
@@ -62,12 +64,12 @@ class HTML
     articles.each do |article|
       if parent == article
         start_div( 'index_text t0')
-        @output << "<span> &raquo; #{HTML.prettify( article.title)}</span>"
+        @output << "<span> &raquo; #{prettify( article.title)}</span>"
         @output << "</DIV>"
       else
         start_div( 'index_text t0')
         rp = relative_path( @path, article.sink_filename)
-        @output << " &raquo; <A HREF=\"#{rp}\">#{HTML.prettify( article.title)}</A>"
+        @output << " &raquo; <A HREF=\"#{rp}\">#{prettify( article.title)}</A>"
         @output << "</DIV>"
       end
     end
@@ -148,21 +150,6 @@ class HTML
     end
   end
 
-  def format_date( date)
-    ord = if (date.day > 3) and (date.day < 21)
-        "th"
-    elsif (date.day % 10) == 1
-        "st"
-    elsif (date.day % 10) == 2
-        "nd"
-    elsif (date.day % 10) == 3
-        "rd"
-    else
-        "th"
-    end
-    date.strftime( "%A, ") + date.day.to_s + ord + date.strftime( " %B %Y")
-  end
-
   def html( lines)
     lines.each do |line|
       @output << line
@@ -185,35 +172,6 @@ class HTML
   def picture_rp
     m = /^(.*)\./.match( @path.split('/')[-1])
     m[1] + '_pictures.html'
-  end
-
-  def self.prettify( name)
-    if m = /^\d+[:_](.+)$/.match( name)
-      name = m[1]
-    end
-    if name.downcase == name
-      name.split( "_").collect do |part|
-        part.capitalize
-      end.join( " ")
-    else
-      name.gsub( "_", " ")
-    end
-  end
-
-  def relative_path( from, to)
-    HTML::relative_path( from, to)
-  end
-
-  def self.relative_path( from, to)
-    from = from.split( "/")
-    from = from[0...-1] if /\.(html|php|txt|md)$/ =~ from[-1]
-    to = to.split( "/")
-    while (to.size > 0) and (from.size > 0) and (to[0] == from[0])
-      from = from[1..-1]
-      to = to[1..-1]
-    end
-    rp = ((from.collect { ".."}) + to).join( "/")
-    (rp == '') ? '.' : rp
   end
 
   def script( script)

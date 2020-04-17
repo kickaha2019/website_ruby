@@ -7,9 +7,8 @@
 class Link
   attr_reader :date, :icon, :sink_filename, :title
 
-	def initialize( article, lineno, link, title=nil)
+	def initialize( article, link, title=nil)
 		@article       = article
-		@lineno        = lineno
 		@link          = link
 		@title         = title
 		@blurb         = nil

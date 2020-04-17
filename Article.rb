@@ -7,13 +7,15 @@
 require 'fileutils'
 require 'image'
 require "markdown.rb"
+require 'utils'
 
 class Article
+  include Utils
   attr_accessor :content_added, :images, :sink_filename, :blurb
 
   class BackstopIcon < Image
     def initialize( sink)
-      super( nil, sink, nil, nil, nil, 0)
+      super( nil, sink, nil, nil, nil)
     end
 
     def prepare_thumbnail( width, height, bw)
@@ -28,7 +30,6 @@ class Article
   def initialize( source, sink)
     @source_filename = source
     @sink_filename   = sink
-    @seen_links      = {}
     @children        = []
     @children_sorted = true
     @images          = []
@@ -43,7 +44,7 @@ class Article
 
   def add_child( article)
     if children? && (@children[0].class != article.class)
-      error( 0, 'Mixed children both links and articles')
+      error( 'Mixed children both links and articles')
     end
     unless article.is_a?( Link)
       @children_sorted = false
@@ -51,8 +52,8 @@ class Article
     @children << article
   end
 
-  def add_image( compiler, lineno, image, caption)
-    @images << describe_image( compiler, lineno, image, caption)
+  def add_image( compiler, image, caption)
+    @images << describe_image( compiler, image, caption)
   end
 
   def add_markdown( defn)
@@ -75,13 +76,13 @@ class Article
     @date # ? @date : Time.gm( 1970, "Jan", 1)
   end
 
-  def describe_image( compiler, lineno, image_filename, caption)
+  def describe_image( compiler, image_filename, caption)
     if /[\["\|<>]/ =~ caption
-      error( lineno, "Image caption containing special character: " + caption)
+      error( "Image caption containing special character: " + caption)
       caption = nil
     end
 
-    # caption = "#{source_filename}:#{lineno}" unless caption
+    # caption = "#{source_filename}" unless caption
     fileinfo = compiler.fileinfo( image_filename)
     info = nil
     ts = File.mtime( image_filename).to_i
@@ -92,7 +93,7 @@ class Article
     end
 
     unless info
-      dims = get_image_dims( lineno, image_filename)
+      dims = get_image_dims( image_filename)
       info = [ts, dims[:width], dims[:height]]
       File.open( fileinfo, 'w') do |io|
         io.puts info.collect {|i| i.to_s}.join("\n")
@@ -116,18 +117,17 @@ class Article
                compiler.sink_filename( image_filename),
                caption,
                info[1],
-               info[2],
-               lineno)
+               info[2])
   end
 
-  def error( lineno, msg)
-    @errors << [@source_filename, lineno, msg]
+  def error( msg)
+    @errors << msg
   end
 
-  def get_image_dims( lineno, filename)
+  def get_image_dims( filename)
     #raise filename # DEBUG CODE
     if not system( "sips -g pixelHeight -g pixelWidth -g orientation " + filename + " >sips.log")
-      error( lineno, "Error running sips on: " + filename)
+      error( "Error running sips on: " + filename)
       nil
     else
       w,h,flip = nil, nil, false
@@ -140,7 +140,7 @@ class Article
       rel_path.each_index do |i|
         next if /^\./ =~ rel_path[i]
         if abs_path[i - rel_path.size] != rel_path[i]
-          error( lineno, "Case mismatch for image name [#{filename}]")
+          error( "Case mismatch for image name [#{filename}]")
           return nil
         end
       end
@@ -157,7 +157,7 @@ class Article
       if w and h
         {:width => w, :height => h}
       else
-        error( lineno, "Not a valid image file: " + filename)
+        error( "Not a valid image file: " + filename)
         nil
       end
     end
@@ -216,7 +216,7 @@ class Article
 
     if @children.size > 0
       to_index = children
-      error( 0, 'Some content does not wrap but has children') unless wrap
+      error( 'Some content does not wrap but has children') unless wrap
     else
       to_index = siblings( parents) # .select {|a| a != self}
     end
@@ -307,16 +307,16 @@ class Article
       if /^\// =~ @icon
         path = @icon
       else
-        path = compiler.abs_filename( @source_filename, @icon)
+        path = abs_filename( @source_filename, @icon)
         if ! File.exists?( path)
           path, err = compiler.lookup( @icon)
         end
       end
 
       if err.nil? && File.exists?( path)
-        @icon = describe_image( compiler, 0, path, nil)
+        @icon = describe_image( compiler, path, nil)
       else
-        error( 0, err ? err : "Icon #{@icon} not found")
+        error( err ? err : "Icon #{@icon} not found")
         @icon = nil
       end
     end
@@ -326,7 +326,7 @@ class Article
       err = nil
       path = image['path'].strip
       unless /^\// =~ path
-        path1 = compiler.abs_filename( @source_filename, path)
+        path1 = abs_filename( @source_filename, path)
         if File.exists?( path1)
           path = path1
         else
@@ -335,9 +335,9 @@ class Article
       end
 
       if err.nil? && File.exists?( path)
-        add_image( compiler, 0, path, image['tag'])
+        add_image( compiler, path, image['tag'])
       else
-        error( 0, err ? err : ("Image file not found: " + image['path']))
+        error( err ? err : ("Image file not found: " + image['path']))
       end
     end
 
@@ -377,12 +377,8 @@ class Article
     html.end_div
   end
 
-  def prettify( name)
-    HTML.prettify( name)
-  end
-
   def report_errors( compiler)
-    @errors.each {|err| compiler.error( * err)}
+    @errors.each {|err| compiler.error( @source_filename, err)}
   end
 
   def set_blurb( b)
@@ -406,7 +402,7 @@ class Article
     if m = /^(.*)\.html$/.match( @sink_filename)
       @sink_filename = m[1] + '.php'
     else
-      error( 0, 'Unable to set page to PHP')
+      error( 'Unable to set page to PHP')
     end
   end
 
@@ -490,8 +486,8 @@ class Article
     end
 
     if has_any_content? && @date
-      html.date( @date) do |error|
-        error( lineno, error)
+      html.date( @date) do |err|
+        error( err)
       end
     end
 

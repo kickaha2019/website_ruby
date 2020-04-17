@@ -1,6 +1,9 @@
 require 'commonmarker'
+require 'utils'
 
 class ArticleRenderer < CommonMarker::HtmlRenderer
+  include Utils
+
   def initialize( compiler, article, injected)
     super()
     @compiler = compiler
@@ -25,7 +28,7 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
     elsif /^(http|https|mailto):/ =~ node.url
       url = node.url
     elsif /\.(html|php)$/ =~ node.url
-      url = HTML::relative_path( @article.sink_filename, node.url)
+      url = relative_path( @article.sink_filename, node.url)
     else
       url = @compiler.link( node.url)
       unless url
@@ -34,7 +37,7 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
           url = ''
           @article.error( 0, err)
         else
-          url = HTML::relative_path( @article.sink_filename, ref.sink_filename)
+          url = relative_path( @article.sink_filename, ref.sink_filename)
         end
       end
     end

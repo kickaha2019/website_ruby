@@ -1,13 +1,12 @@
 class Image
   attr_reader :caption, :height, :width
 
-  def initialize( source, sink, caption, width, height, lineno)
+  def initialize( source, sink, caption, width, height)
     @source  = source
     @sink    = sink
     @caption = caption
     @width   = width
     @height  = height
-    @lineno  = lineno
   end
 
   def constrain_dims( tw, th, w, h)

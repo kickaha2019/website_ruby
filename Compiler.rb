@@ -25,8 +25,10 @@ require 'cgi'
 load "Article.rb"
 load "HTML.rb"
 load "Link.rb"
+require 'utils'
 
 class Compiler
+  include Utils
   @@default_date = Time.gm( 1970, "Jan", 1)
 
   # Initialisation
@@ -143,7 +145,7 @@ class Compiler
     end
 
     if date = defn['date']
-      t = convert_date( article, 0, date)
+      t = convert_date( article, date)
       article.set_date( t)
     end
 
@@ -155,7 +157,7 @@ class Compiler
       if ext == 'php'
         article.set_php
       else
-        article.error( 0, "Extension #{ext} not supported")
+        article.error( "Extension #{ext} not supported")
       end
     end
 
@@ -165,103 +167,8 @@ class Compiler
 
     if links = defn['links']
       links.each do |link|
-        article.add_child( Link.new( article, 0, link['path'], link['tag']))
+        article.add_child( Link.new( article, link['path'], link['tag']))
       end
-    end
-  end
-
-  def prepare( parents, article)
-    debug_hook( article)
-
-    begin
-      article.prepare( self, parents)
-    rescue Exception => bang
-      article.error( 0, bang.message)
-      raise
-    end
-
-    article.children.each do |child|
-      prepare( parents + [article], child)
-    end
-  end
-
-  def regenerate( parents, article)
-    debug_hook( article)
-
-#    if article.has_content? || (! article.has_picture_page?)
-      html = HTML.new( self, @sink, article.sink_filename)
-      html.start
-      article.to_html( parents, html)
-      html.finish do |error|
-        article.error( 0, error)
-      end
-#    end
-
-    if article.has_picture_page?( parents)
-      html = HTML.new( self, @sink, article.picture_sink_filename)
-      html.start
-      article.to_pictures( parents, html)
-      html.finish do |error|
-        article.error( 0, error)
-      end
-    end
-
-    article.children.each do |child|
-      regenerate( parents + [article], child) if child.is_a?( Article)
-    end
-  end
-
-  def remember( key, path)
-    key = key.split('/')
-    (0...key.length).each do |i|
-      @key2paths[ key[i..-1].join('/')] << path
-    end
-  end
-
-  def report_errors( article)
-    article.report_errors( self)
-    article.children.each do |child|
-      report_errors( child) if child.is_a?( Article)
-    end
-  end
-
-# =================================================================
-# Helper methods
-# =================================================================
-
-  def abs_filename( path, filename)
-    return filename if /^\// =~ filename
-    path = File.dirname( path)
-    while /^\.\.\// =~ filename
-      path = File.dirname( path)
-      filename = filename[3..-1]
-    end
-    path + '/' + filename
-  end
-
-  def convert_date( article, lineno, text)
-    day = -1
-    month = -1
-    year = -1
-
-    text.split.each do |el|
-      i = el.to_i
-      if i > 1900
-        year = i
-      elsif (i > 0) && (i < 32)
-        day = i
-      else
-        if i = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"].index( el[0..2].downcase)
-          month = i + 1
-        end
-      end
-    end
-
-    if (day > 0) && (month > 0) && (year > 0)
-      Time.gm( year, month, day)
-    else
-      article.error( lineno, "Bad date [#{text}]")
-      @@default_date
     end
   end
 
@@ -269,10 +176,9 @@ class Compiler
     @dimensions[key]
   end
 
-  def error( path, lineno, msg)
+  def error( path, msg)
     @errors = @errors + 1
-    lineref = lineno ? ":#{lineno}" : ""
-    puts "***** #{msg} [#{path}#{lineref}]"
+    puts "***** #{msg} [#{path}]"
   end
 
   def errors?
@@ -311,6 +217,61 @@ class Compiler
       return nil, "Ambiguous path for #{path}"
     else
       return matches[0], nil
+    end
+  end
+
+  def prepare( parents, article)
+    debug_hook( article)
+
+    begin
+      article.prepare( self, parents)
+    rescue Exception => bang
+      article.error( bang.message)
+      raise
+    end
+
+    article.children.each do |child|
+      prepare( parents + [article], child)
+    end
+  end
+
+  def regenerate( parents, article)
+    debug_hook( article)
+
+#    if article.has_content? || (! article.has_picture_page?)
+    html = HTML.new( self, @sink, article.sink_filename)
+    html.start
+    article.to_html( parents, html)
+    html.finish do |error|
+      article.error( error)
+    end
+#    end
+
+    if article.has_picture_page?( parents)
+      html = HTML.new( self, @sink, article.picture_sink_filename)
+      html.start
+      article.to_pictures( parents, html)
+      html.finish do |error|
+        article.error( error)
+      end
+    end
+
+    article.children.each do |child|
+      regenerate( parents + [article], child) if child.is_a?( Article)
+    end
+  end
+
+  def remember( key, path)
+    key = key.split('/')
+    (0...key.length).each do |i|
+      @key2paths[ key[i..-1].join('/')] << path
+    end
+  end
+
+  def report_errors( article)
+    article.report_errors( self)
+    article.children.each do |child|
+      report_errors( child) if child.is_a?( Article)
     end
   end
 

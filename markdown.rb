@@ -1,6 +1,9 @@
 require 'article_renderer'
+require 'utils'
 
 class Markdown
+  include Utils
+
   def initialize( defn)
     @doc      = CommonMarker.render_doc( defn, [:UNSAFE], [:table])
     @html     = []
@@ -61,7 +64,7 @@ class Markdown
     images.each_index do |index|
       images[index].prepare_images( dims, :prepare_thumbnail, nil) do |image, w, h, sizes|
         compiler.record( image)
-        rp = HTML::relative_path( article.sink_filename, image)
+        rp = relative_path( article.sink_filename, image)
         if images.size > 1
           if size_rotates[sizes].nil?
             size_rotates[sizes] = @rotates.size
