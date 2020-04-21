@@ -9,6 +9,7 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
     @compiler = compiler
     @article  = article
     @injected = injected
+    @do_para  = false
   end
 
   def has_text?( node)
@@ -48,10 +49,11 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
   def paragraph( node)
     if node.parent.type == :document
       inject = @injected[@top_para] ? @injected[@top_para] : ''
-      if @top_para == 0
-        out( inject, :children)
-      else
+      if @do_para
         out( '<p>', inject, :children, '</p>')
+      else
+        out( inject, :children)
+        @do_para = true
       end
       @top_para += 1
     else
@@ -60,6 +62,7 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
   end
 
   def table(node)
+    @do_para = false if node.parent.type == :document
     clazz = has_text?( node.first_child) ? 'table' : 'list'
     out( "<div class=\"#{clazz}\">")
     super
