@@ -59,7 +59,7 @@ class LinkChecker
 				line = lines[i]
 
 				if /\.md$/ =~ f
-					while m = /\]\((http[^\]]*)\)(.*)$/.match( line)
+					while m = /\]\((http[^\)]*)\)(.*)$/.match( line)
 						@links[m[1]] << "File: #{f}, Line: #{i+1}"
 						line = m[2]
 					end
