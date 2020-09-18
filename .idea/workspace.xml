@@ -3,7 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="9e440521-c7e4-4f23-9012-a98effea9bfa" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/check_links.rb" beforeDir="false" afterPath="$PROJECT_DIR$/check_links.rb" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -73,24 +72,6 @@
     </option>
   </component>
   <component name="RunManager" selected="Ruby.Build website">
-    <configuration name="Add gallery" type="RubyRunConfigurationType" factoryName="Ruby">
-      <module name="ruby" />
-      <RUBY_RUN_CONFIG NAME="RUBY_ARGS" VALUE="" />
-      <RUBY_RUN_CONFIG NAME="WORK DIR" VALUE="$MODULE_DIR$/../Articles/Diary/2020/New_Zealand/2 Godzilla Hotel" />
-      <RUBY_RUN_CONFIG NAME="SHOULD_USE_SDK" VALUE="false" />
-      <RUBY_RUN_CONFIG NAME="ALTERN_SDK_NAME" VALUE="" />
-      <RUBY_RUN_CONFIG NAME="myPassParentEnvs" VALUE="true" />
-      <EXTENSION ID="BundlerRunConfigurationExtension" bundleExecEnabled="false" />
-      <EXTENSION ID="JRubyRunConfigurationExtension" NailgunExecEnabled="false" />
-      <EXTENSION ID="RubyCoverageRunConfigurationExtension" track_test_folders="true" runner="rcov">
-        <COVERAGE_PATTERN ENABLED="true">
-          <PATTERN REGEXPS="/.rvm/" INCLUDED="false" />
-        </COVERAGE_PATTERN>
-      </EXTENSION>
-      <RUBY_RUN_CONFIG NAME="SCRIPT_PATH" VALUE="$MODULE_DIR$/add_gallery.rb" />
-      <RUBY_RUN_CONFIG NAME="SCRIPT_ARGS" VALUE="" />
-      <method v="2" />
-    </configuration>
     <configuration name="Build website" type="RubyRunConfigurationType" factoryName="Ruby">
       <module name="ruby" />
       <RUBY_RUN_CONFIG NAME="RUBY_ARGS" VALUE="-I ruby" />
@@ -235,24 +216,6 @@
       <RUBY_RUN_CONFIG NAME="SCRIPT_ARGS" VALUE="$MODULE_DIR$/../Articles/Map/Europe/North_England/Derbyshire/index.yaml" />
       <method v="2" />
     </configuration>
-    <configuration name="Process YAML files" type="RubyRunConfigurationType" factoryName="Ruby">
-      <module name="ruby" />
-      <RUBY_RUN_CONFIG NAME="RUBY_ARGS" VALUE="" />
-      <RUBY_RUN_CONFIG NAME="WORK DIR" VALUE="$MODULE_DIR$" />
-      <RUBY_RUN_CONFIG NAME="SHOULD_USE_SDK" VALUE="false" />
-      <RUBY_RUN_CONFIG NAME="ALTERN_SDK_NAME" VALUE="" />
-      <RUBY_RUN_CONFIG NAME="myPassParentEnvs" VALUE="true" />
-      <EXTENSION ID="BundlerRunConfigurationExtension" bundleExecEnabled="false" />
-      <EXTENSION ID="JRubyRunConfigurationExtension" NailgunExecEnabled="false" />
-      <EXTENSION ID="RubyCoverageRunConfigurationExtension" track_test_folders="true" runner="rcov">
-        <COVERAGE_PATTERN ENABLED="true">
-          <PATTERN REGEXPS="/.rvm/" INCLUDED="false" />
-        </COVERAGE_PATTERN>
-      </EXTENSION>
-      <RUBY_RUN_CONFIG NAME="SCRIPT_PATH" VALUE="$MODULE_DIR$/process_yaml_files.rb" />
-      <RUBY_RUN_CONFIG NAME="SCRIPT_ARGS" VALUE="$MODULE_DIR$/../Articles google_maps_key=AIzaSyAly42Gk893CAkXjHtLScKysXgpaii1yHw" />
-      <method v="2" />
-    </configuration>
     <configuration name="Revamp website" type="RubyRunConfigurationType" factoryName="Ruby">
       <module name="ruby" />
       <RUBY_RUN_CONFIG NAME="RUBY_ARGS" VALUE="-I ruby" />
@@ -289,35 +252,14 @@
       <RUBY_RUN_CONFIG NAME="SCRIPT_ARGS" VALUE="$USER_HOME$/Sites --exclude adventureconvention pagoda pagoda_editor Games h10 henge MyGames_extras music connect.php bandwidth.php Games seetheworld Reviews resources Article_resources Articles/resources" />
       <method v="2" />
     </configuration>
-    <configuration name="fred" type="RubyRunConfigurationType" factoryName="Ruby">
-      <module name="ruby" />
-      <RUBY_RUN_CONFIG NAME="RUBY_ARGS" VALUE="" />
-      <RUBY_RUN_CONFIG NAME="WORK DIR" VALUE="$MODULE_DIR$" />
-      <RUBY_RUN_CONFIG NAME="SHOULD_USE_SDK" VALUE="false" />
-      <RUBY_RUN_CONFIG NAME="ALTERN_SDK_NAME" VALUE="" />
-      <RUBY_RUN_CONFIG NAME="myPassParentEnvs" VALUE="true" />
-      <EXTENSION ID="BundlerRunConfigurationExtension" bundleExecEnabled="false" />
-      <EXTENSION ID="JRubyRunConfigurationExtension" NailgunExecEnabled="false" />
-      <EXTENSION ID="RubyCoverageRunConfigurationExtension" track_test_folders="true" runner="rcov">
-        <COVERAGE_PATTERN ENABLED="true">
-          <PATTERN REGEXPS="/.rvm/" INCLUDED="false" />
-        </COVERAGE_PATTERN>
-      </EXTENSION>
-      <RUBY_RUN_CONFIG NAME="SCRIPT_PATH" VALUE="$MODULE_DIR$/fred.rb" />
-      <RUBY_RUN_CONFIG NAME="SCRIPT_ARGS" VALUE="$MODULE_DIR$/../Articles" />
-      <method v="2" />
-    </configuration>
     <list>
       <item itemvalue="Ruby.Build website" />
       <item itemvalue="Ruby.Revamp website" />
       <item itemvalue="Ruby.Overlay editor" />
-      <item itemvalue="Ruby.Process YAML files" />
       <item itemvalue="Ruby.Check golden files" />
       <item itemvalue="Ruby.Check links" />
-      <item itemvalue="Ruby.Add gallery" />
       <item itemvalue="Ruby.Find links" />
       <item itemvalue="Ruby.Validate reachability" />
-      <item itemvalue="Ruby.fred" />
       <item itemvalue="Ruby.Markdown dump" />
       <item itemvalue="Ruby.Convert txt to md" />
       <item itemvalue="Ruby.Generate anchor map" />
@@ -568,7 +510,8 @@
       <workItem from="1594222433118" duration="179000" />
       <workItem from="1595365577113" duration="280000" />
       <workItem from="1595424272368" duration="167000" />
-      <workItem from="1600423141225" duration="448000" />
+      <workItem from="1600423141225" duration="721000" />
+      <workItem from="1600424732716" duration="56000" />
     </task>
     <servers />
   </component>
@@ -672,22 +615,6 @@
             <option name="block-ordinal" value="-1" />
           </properties>
           <option name="timeStamp" value="83" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="ruby-line">
-          <url>file://$PROJECT_DIR$/fred.rb</url>
-          <line>23</line>
-          <properties a="-1">
-            <option name="block-ordinal" value="-1" />
-          </properties>
-          <option name="timeStamp" value="88" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="ruby-line">
-          <url>file://$PROJECT_DIR$/fred.rb</url>
-          <line>11</line>
-          <properties a="-1">
-            <option name="block-ordinal" value="-1" />
-          </properties>
-          <option name="timeStamp" value="89" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="ruby-line">
           <url>file://$PROJECT_DIR$/convert_text_to_md.rb</url>
