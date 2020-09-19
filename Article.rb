@@ -186,7 +186,7 @@ class Article
 
   def has_much_content?
     text_chars = @markdown ? @markdown.text_chars : 0
-    text_chars > 80
+    text_chars > 300
   end
 
   def has_picture_page?( parents)
