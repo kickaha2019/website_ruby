@@ -74,7 +74,7 @@ class Markdown
           id = " ID=\"image#{size_rotates[sizes]}\""
         end
         if index == 0
-          raw << "<IMG #{id} CLASS=\"#{sizes}\" SRC=\"#{rp}\" ALT=\"#{images[index].caption}\">"
+          raw << "<IMG #{id} CLASS=\"#{sizes}\" SRC=\"#{rp}\" ALT=\"#{images[index].tag}\">"
         end
       end
     end
