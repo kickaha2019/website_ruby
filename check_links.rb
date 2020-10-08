@@ -26,6 +26,13 @@ class LinkChecker
 		end
 	end
 
+	def add_links( text, ref)
+		while m = /\]\((http[^\)]*)\)(.*)$/m.match( text)
+			@links[m[1]] << ref
+			text = m[2]
+		end
+	end
+
 	def check_links
 		@links.keys.each do |url|
 			escaped = CGI::escapeHTML( url)
@@ -54,20 +61,19 @@ class LinkChecker
 		end
 
 		scan_articles( ARTICLES) do |f|
-			lines = IO.readlines( f)
-			lines.each_index do |i|
-				line = lines[i]
-
-				if /\.md$/ =~ f
-					while m = /\]\((http[^\)]*)\)(.*)$/.match( line)
-						@links[m[1]] << "File: #{f}, Line: #{i+1}"
-						line = m[2]
+			if /\.yaml$/ =~ f
+				defn = YAML.load( IO.read( f))
+				if defn['images']
+					defn['images'].each do |image|
+						if image['caption']
+							add_links( image['caption'], "File: #{f}, Image: #{image['path']}")
+						end
 					end
-				else
-					while m = /^(.*)\[(http\S*)\s(.*)$/.match( line)
-						@links[m[2]] << "File: #{f}, Line: #{i+1}"
-						line = m[1] + m[3]
-					end
+				end
+			else # Assume .md file
+				lines = IO.readlines( f)
+				lines.each_index do |i|
+					add_links( lines[i], "File: #{f}, Line: #{i+1}")
 				end
 			end
 		end
@@ -120,7 +126,7 @@ class LinkChecker
 				next if /^\./ =~ f
 				scan_articles( dir + '/' + f) {|article| yield article}
 			end
-		elsif /\.(txt|md)$/ =~ dir
+		elsif /\.(yaml|md)$/ =~ dir
 			yield dir
 		end
 	end

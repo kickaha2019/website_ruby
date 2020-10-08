@@ -22,15 +22,21 @@ class HTML
     @output << '</SPAN>'
   end
 
-  def add_caption( caption)
-    @output << '<DIV>'
-    write( caption)
+  def add_caption( article, caption)
+    @output << '<DIV CLASS="story t1">'
+    caption.process( article, [], self)
     @output << '</DIV>'
   end
 
   def add_index_dummy
     start_div 'index dummy size1 size2 size3'
     end_div
+  end
+
+  def add_tag( tag)
+    @output << '<DIV>'
+    write( tag)
+    @output << '</DIV>'
   end
 
   def begin_index( target)

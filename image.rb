@@ -1,10 +1,11 @@
 class Image
-  attr_reader :caption, :height, :width
+  attr_reader :caption, :height, :width, :tag
 
-  def initialize( source, sink, caption, width, height)
+  def initialize( source, sink, tag, caption, width, height)
     @source  = source
     @sink    = sink
     @caption = caption
+    @tag     = tag
     @width   = width
     @height  = height
   end
