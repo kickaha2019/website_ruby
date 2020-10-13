@@ -23,7 +23,7 @@ class HTML
   end
 
   def add_caption( article, caption)
-    @output << '<DIV CLASS="story t1">'
+    @output << '<DIV>'
     caption.process( article, [], self)
     @output << '</DIV>'
   end
@@ -31,12 +31,6 @@ class HTML
   def add_index_dummy
     start_div 'index dummy size1 size2 size3'
     end_div
-  end
-
-  def add_tag( tag)
-    @output << '<DIV>'
-    write( tag)
-    @output << '</DIV>'
   end
 
   def begin_index( target)
@@ -164,7 +158,6 @@ class HTML
 
   def image( file, w, h, alt_text, inject='')
     @compiler.record( file)
-    alt_text = 'TTBA' unless alt_text
     rp = relative_path( @path, file)
     @output << "<IMG CLASS=\"#{inject.strip}\" SRC=\"#{rp}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" ALT=\"#{alt_text}\">"
   end

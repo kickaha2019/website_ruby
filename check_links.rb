@@ -65,8 +65,8 @@ class LinkChecker
 				defn = YAML.load( IO.read( f))
 				if defn['images']
 					defn['images'].each do |image|
-						if image['caption']
-							add_links( image['caption'], "File: #{f}, Image: #{image['path']}")
+						if image['tag']
+							add_links( image['tag'], "File: #{f}, Image: #{image['path']}")
 						end
 					end
 				end

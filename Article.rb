@@ -15,7 +15,7 @@ class Article
 
   class BackstopIcon < Image
     def initialize( sink)
-      super( nil, sink, nil, nil, nil,nil)
+      super( nil, sink, nil, nil, nil)
     end
 
     def prepare_thumbnail( width, height, bw)
@@ -52,8 +52,8 @@ class Article
     @children << article
   end
 
-  def add_image( compiler, image, tag, caption)
-    @images << describe_image( compiler, image, tag, caption)
+  def add_image( compiler, image, tag)
+    @images << describe_image( compiler, image, tag)
   end
 
   def add_markdown( defn)
@@ -76,13 +76,7 @@ class Article
     @date # ? @date : Time.gm( 1970, "Jan", 1)
   end
 
-  def describe_image( compiler, image_filename, tag, caption)
-    if /[\["\|<>]/ =~ tag
-      error( "Image tag containing special character: " + tag)
-      caption = nil
-    end
-
-    # caption = "#{source_filename}" unless caption
+  def describe_image( compiler, image_filename, tag)
     fileinfo = compiler.fileinfo( image_filename)
     info = nil
     ts = File.mtime( image_filename).to_i
@@ -116,7 +110,6 @@ class Article
     Image.new( image_filename,
                compiler.sink_filename( image_filename),
                tag,
-               caption,
                info[1],
                info[2])
   end
@@ -315,7 +308,7 @@ class Article
       end
 
       if err.nil? && File.exists?( path)
-        @icon = describe_image( compiler, path, nil, nil)
+        @icon = describe_image( compiler, path, nil)
       else
         error( err ? err : "Icon #{@icon} not found")
         @icon = nil
@@ -336,11 +329,11 @@ class Article
       end
 
       if err.nil? && File.exists?( path)
-        if md = image['caption']
+        if md = image['tag']
           md = Markdown.new( md)
           md.prepare( compiler, self)
         end
-        add_image( compiler, path, image['tag'] ? image['tag'] : title, md)
+        add_image( compiler, path, md)
       else
         error( err ? err : ("Image file not found: " + image['path']))
       end
@@ -374,14 +367,12 @@ class Article
     dims = html.dimensions( 'image')
     @images.each do |image|
       image.prepare_images( dims, :prepare_source_image) do |file, w, h, sizes|
-        html.image( file, w, h, image.tag, sizes)
+        html.image( file, w, h, nil, sizes)
       end
 
       if do_caption
-        if image.caption
-          html.add_caption( self, image.caption)
-        elsif image.tag
-          html.add_tag( image.tag)
+        if image.tag
+          html.add_caption( self, image.tag)
         end
       end
     end
