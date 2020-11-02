@@ -62,7 +62,7 @@ class Markdown
     id = ''
 
     images.each_index do |index|
-      images[index].prepare_images( dims, :prepare_thumbnail, nil) do |image, w, h, sizes|
+      images[index].prepare_images( dims, :prepare_thumbnail) do |image, w, h, sizes|
         compiler.record( image)
         rp = relative_path( article.sink_filename, image)
         if images.size > 1

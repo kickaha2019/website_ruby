@@ -18,7 +18,7 @@ class Article
       super( nil, sink, nil, nil, nil)
     end
 
-    def prepare_thumbnail( width, height, bw)
+    def prepare_thumbnail( width, height)
       return @sink, width, height
     end
 
@@ -38,6 +38,7 @@ class Article
     @markdown        = nil
     @date            = nil
     @blurb           = nil
+    @no_index        = false
 
     set_title( name)
   end
@@ -210,12 +211,12 @@ class Article
 
     if @children.size > 0
       to_index = children
-      error( 'Some content does not wrap but has children') unless wrap
+      error( 'Some content does not wrap but has children') unless wrap  || @no_index
     else
       to_index = siblings( parents) # .select {|a| a != self}
     end
 
-    if to_index.size == 0
+    if @no_index || (to_index.size == 0)
       html.no_indexes
       return
     end
@@ -250,9 +251,9 @@ class Article
     target = (page == self) ? nil : page.sink_filename
     alt_text = prettify( page.title)
 
-    html.begin_index( target)
+    html.begin_index( target, (page == self) ? 'border_white' : '')
     html.add_blurb( page.blurb) unless (page == self) || page.blurb.nil?
-    image.prepare_images( dims, :prepare_thumbnail, page == self) do |file, w, h, sizes|
+    image.prepare_images( dims, :prepare_thumbnail) do |file, w, h, sizes|
       html.image( file, w, h, alt_text, sizes)
     end
     html.end_index( target, alt_text)
@@ -261,14 +262,13 @@ class Article
   def index_using_images( to_index, html)
     dims = html.dimensions( 'icon')
     backstop = BackstopIcon.new( html.sink_filename( "/resources/down_cyan.png"))
-    backstop_bw = BackstopIcon.new( html.sink_filename( "/resources/down_bw.png"))
     scaled_dims = get_scaled_dims( dims,
                                    to_index.collect do |child|
                                      child.icon ? child.icon : backstop
                                    end)
 
     to_index.each do |child|
-      icon = child.icon ? child.icon : ((child == self) ? backstop_bw : backstop)
+      icon = child.icon ? child.icon : backstop
       index_resource( html, child, icon, scaled_dims)
     end
 
@@ -398,6 +398,10 @@ class Article
 
   def set_images( images)
     @images = images
+  end
+
+  def set_no_index
+    @no_index = true
   end
 
   def set_php

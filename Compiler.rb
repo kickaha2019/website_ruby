@@ -153,6 +153,10 @@ class Compiler
       article.set_icon( icon)
     end
 
+    if noindex = defn['no_index']
+      article.set_no_index
+    end
+
     if ext = defn['extension']
       if ext == 'php'
         article.set_php

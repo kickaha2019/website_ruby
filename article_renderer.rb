@@ -36,7 +36,7 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
         ref, err = @compiler.lookup( node.url)
         if err
           url = ''
-          @article.error( 0, err)
+          @article.error( err)
         else
           url = relative_path( @article.sink_filename, ref.sink_filename)
         end

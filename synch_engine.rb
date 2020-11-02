@@ -10,17 +10,17 @@ class SynchEngine
 
     # Initialisation
     def initialize( args = {})
-        @temp = 0
-        check_set( @local_root = args[:local_root])
-        check_set( @shadow_root = args[:shadow_root])
-        check_set( @remote_root = args[:remote_root])
-        check_set( @wanted_types = args[:wanted_types])
-        check_set( @exclude_paths = args[:exclude_paths])
-		@tar_script = File.open( '/tmp/tar.txt', 'w')
-		@ssh_script = File.open( '/tmp/ssh.txt', 'w')
-		@ssh_script.puts "cd #{@remote_root}"
-		@ssh_script.puts "tar -xvf ../website.tar"
-		@ssh_script.puts "rm ../website.tar"
+      @temp = 0
+      check_set( @local_root = args[:local_root])
+      check_set( @shadow_root = args[:shadow_root])
+      check_set( @remote_root = args[:remote_root])
+      check_set( @wanted_types = args[:wanted_types])
+      check_set( @exclude_paths = args[:exclude_paths])
+      @tar_script = File.open( '/tmp/tar.txt', 'w')
+      @ssh_script = File.open( '/tmp/ssh.txt', 'w')
+      @ssh_script.puts "cd #{@remote_root}"
+      @ssh_script.puts "tar -xvf ../website.tar"
+      @ssh_script.puts "rm ../website.tar"
     end
     
 # =================================================================

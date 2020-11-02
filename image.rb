@@ -64,13 +64,13 @@ class Image
     return imagefile, w, h
   end
 
-  def prepare_thumbnail( width, height, bw)
+  def prepare_thumbnail( width, height)
     w,h = shave_thumbnail( width, height, @width, @height)
     m = /^(.*)(\.\w*)$/.match( @sink)
-    thumbfile = m[1] + "-#{width}-#{height}" + (bw ? '_bw' : '') + m[2]
+    thumbfile = m[1] + "-#{width}-#{height}" + m[2]
 
     if not File.exists?( thumbfile)
-      cmd = ["scripts/thumbnail#{bw ? '_bw' : ''}.csh"]
+      cmd = ["scripts/thumbnail.csh"]
       cmd << @source
       cmd << thumbfile
       [w,h,width,height].each {|i| cmd << i.to_s}

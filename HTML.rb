@@ -33,9 +33,9 @@ class HTML
     end_div
   end
 
-  def begin_index( target)
+  def begin_index( target, inject_class='')
     @output << "<A CLASS=\"index t0 tooltip\" HREF=\"#{relative_path( @path, target)}\">" if target
-    start_div( "index t0") unless target
+    start_div( "index t0 #{inject_class}") unless target
   end
 
   def breadcrumbs( parents, title, pictures_link)
