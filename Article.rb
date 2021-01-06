@@ -121,13 +121,13 @@ class Article
 
   def get_image_dims( filename)
     #raise filename # DEBUG CODE
-    if not system( "sips -g pixelHeight -g pixelWidth -g orientation " + filename + " >sips.log")
+    if not system( "sips -g pixelHeight -g pixelWidth -g orientation " + filename + " >/tmp/sips.log")
       error( "Error running sips on: " + filename)
       nil
     else
       w,h,flip = nil, nil, false
 
-      lines = IO.readlines( "sips.log")
+      lines = IO.readlines( "/tmp/sips.log")
 
       abs_path = lines[0].chomp.split('/')
       rel_path = filename.split('/')
