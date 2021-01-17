@@ -32,18 +32,19 @@ class Compiler
   @@default_date = Time.gm( 1970, "Jan", 1)
 
   # Initialisation
-  def initialize( source, sink, debug_pages=nil)
-    @errors = 0
-    @source = source
-    @sink = sink
-    @debug_pages = debug_pages.nil? ? nil : Regexp.new( debug_pages)
+  def initialize( cache, source, sink, debug_pages=nil)
+    @cache         = cache
+    @errors        = 0
+    @source        = source
+    @sink          = sink
+    @debug_pages   = debug_pages.nil? ? nil : Regexp.new( debug_pages)
     @special_chars = {}
-    @templates = {}
-    @links = YAML.load( File.open( source + "/links.yaml"))
-    @dimensions = YAML.load( File.open( source + "/dimensions.yaml"))
-    @generated = {}
-    @variables = {}
-    @key2paths = Hash.new {|h,k| h[k] = []}
+    @templates     = {}
+    @links         = YAML.load( File.open( source + "/links.yaml"))
+    @dimensions    = YAML.load( File.open( source + "/dimensions.yaml"))
+    @generated     = {}
+    @variables     = {}
+    @key2paths     = Hash.new {|h,k| h[k] = []}
   end
 
 # =================================================================
@@ -101,7 +102,7 @@ class Compiler
     # Loop over source files - skip image files and other specials
     Dir.entries( @source + path).each do |file|
       next if /^\./ =~ file
-      next if (path == '') && ['resources', 'templates', 'fileinfo', 'README.md','dimensions.yaml','links.yaml'].include?( file)
+      next if (path == '') && ['resources', 'templates', 'README.md','dimensions.yaml','links.yaml'].include?( file)
       path1 = path + "/" + file
 
       if File.directory?( @source + path1)
@@ -190,7 +191,7 @@ class Compiler
   end
 
   def fileinfo( filename)
-    @source + '/fileinfo/' + filename.gsub('/','_')
+    @cache + '/fileinfo/' + filename.gsub('/','_')
   end
 
   def link( ref)

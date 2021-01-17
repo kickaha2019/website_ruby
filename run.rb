@@ -4,7 +4,8 @@
 	Generate HTML structure from article files
 	
 	Command line:
-	
+
+	Cache directory
 	Source directory
 	Target directory
 =end
