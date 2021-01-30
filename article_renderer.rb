@@ -25,18 +25,19 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
 
   def image(node)
     if @images[node.url]
-      send( ("image_" + @images[node.url][0]).to_sym, node, @images[node.url][1])
+      info = @images[node.url]
+      send( ("image_" + info[0]).to_sym, node, info[1], info[2])
     else
       @article.error( "Unprocessed image #{node.url}")
     end
   end
 
-  def image_centre( node, image)
+  def image_centre( node, image, caption)
     image_out( node, image,'image', 'centre', :prepare_source_image)
   end
 
-  def image_end_gallery( node, image)
-    image_inside_gallery( node, image)
+  def image_end_gallery( node, image, caption)
+    image_inside_gallery( node, image, caption)
     out( '</DIV CLASS>')
   end
 
@@ -44,13 +45,13 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
     image_out( node, image, 'icon', side, :prepare_thumbnail)
   end
 
-  def image_inside_gallery( node, image)
+  def image_inside_gallery( node, image, caption)
     out( '<DIV>')
     image_out( node, image, 'icon', '', :prepare_thumbnail)
-    out( node.title, '</DIV>')
+    out( caption, '</DIV>')
   end
 
-  def image_left( node, image)
+  def image_left( node, image, caption)
     image_float( node, image, 'left')
   end
 
@@ -68,13 +69,13 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
     out( raw.join(''))
   end
 
-  def image_right( node, image)
+  def image_right( node, image, caption)
     image_float( node, image, 'right')
   end
 
-  def image_start_gallery( node, image)
+  def image_start_gallery( node, image, caption)
     out( '<DIV CLASS="gallery t1">')
-    image_inside_gallery( node, image)
+    image_inside_gallery( node, image, caption)
   end
 
   def link(node)

@@ -51,13 +51,13 @@ class Markdown
     prepare_image( compiler, article, images, clump[-1], 'end_gallery')
   end
 
-  def prepare_image( compiler, article, images, url, mode)
-    if images[url]
+  def prepare_image( compiler, article, images, info, mode)
+    if images[info[0]]
       article.error( "Duplicate image #{url}")
     else
-      path  = article.abs_filename( article.source_filename, url)
+      path  = article.abs_filename( article.source_filename, info[0])
       image = article.describe_image( compiler, path, nil)
-      images[url] = [mode, image]
+      images[info[0]] = [mode, image, info[1]]
     end
   end
 
@@ -74,7 +74,8 @@ class Markdown
         if m[3] != ''
           article.error( "Bad image declaration for #{m[2]}")
         end
-        clump << m[2]
+        html = CommonMarker.render_html( m[1], :DEFAULT)
+        clump << [m[2], html]
       elsif line == ''
         spaced = true
       elsif clump.size > 0
