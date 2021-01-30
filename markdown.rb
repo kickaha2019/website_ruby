@@ -84,6 +84,9 @@ class Markdown
           article.error( "Bad image declaration for #{m[2]}")
         end
         html = CommonMarker.render_html( m[1], :DEFAULT)
+        if m1 = /^<p>(.*)<\/p>$/i.match( html)
+          html = m1[1]
+        end
         path  = article.abs_filename( article.source_filename, m[2])
         image = article.describe_image( compiler, path, nil)
         clump << [m[2], html, image]

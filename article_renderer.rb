@@ -46,9 +46,9 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
   end
 
   def image_inside_gallery( info)
-    out( '<DIV>')
+    out( '<DIV><DIV>')
     image_out( info, '', :prepare_thumbnail)
-    out( info.caption, '</DIV>')
+    out( '</DIV>', '<DIV>', info.caption, '</DIV></DIV>')
   end
 
   def image_left( info)
