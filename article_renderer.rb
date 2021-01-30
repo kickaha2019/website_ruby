@@ -38,6 +38,10 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
 
   def image_end_gallery( info)
     image_inside_gallery( info)
+
+    (0..7).each do
+      out( '<DIV CLASS="dummy size1 size2 size3"></DIV>')
+    end
     out( '</DIV CLASS>')
   end
 

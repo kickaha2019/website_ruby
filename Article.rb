@@ -11,7 +11,7 @@ require 'utils'
 
 class Article
   include Utils
-  attr_accessor :content_added, :images, :sink_filename, :blurb
+  attr_accessor :content_added, :sink_filename, :blurb
 
   class BackstopIcon < Image
     def initialize( sink)
@@ -32,7 +32,6 @@ class Article
     @sink_filename   = sink
     @children        = []
     @children_sorted = true
-    @images          = []
     @icon            = nil
     @errors          = []
     @markdown        = nil
@@ -51,10 +50,6 @@ class Article
       @children_sorted = false
     end
     @children << article
-  end
-
-  def add_image( compiler, image, tag)
-    @images << describe_image( compiler, image, tag)
   end
 
   def add_markdown( defn)
@@ -179,9 +174,8 @@ class Article
     ! @markdown.nil?
   end
 
-  def has_much_content?
-    text_chars = @markdown ? @markdown.text_chars : 0
-    text_chars > 300
+  def has_only_images?
+    @markdown && @markdown.has_only_images?
   end
 
   def icon
@@ -197,9 +191,11 @@ class Article
     nil
   end
 
-  def index( parents, html, pictures)
+  def index( parents, html)
     if @children.size > 0
       to_index = children
+    elsif has_only_images?
+      to_index = []
     else
       to_index = siblings( parents) # .select {|a| a != self}
     end
@@ -303,30 +299,6 @@ class Article
       end
     end
 
-    defn, @images = @images, []
-    defn.each do |image|
-      err = nil
-      path = image['path'].strip
-      unless /^\// =~ path
-        path1 = abs_filename( @source_filename, path)
-        if File.exists?( path1)
-          path = path1
-        else
-          path, err = compiler.lookup( path)
-        end
-      end
-
-      if err.nil? && File.exists?( path)
-        if md = image['tag']
-          md = Markdown.new( md)
-          md.prepare( compiler, self)
-        end
-        add_image( compiler, path, md)
-      else
-        error( err ? err : ("Image file not found: " + image['path']))
-      end
-    end
-
     if @markdown
       @markdown.prepare( compiler, self)
     end
@@ -359,10 +331,6 @@ class Article
 
   def set_icon( path)
     @icon = path
-  end
-
-  def set_images( images)
-    @images = images
   end
 
   def set_no_index
@@ -432,7 +400,7 @@ class Article
     html.breadcrumbs( parents, title, false) if parents.size > 0
     html.start_div( 'payload content')
 
-    index( parents, html, images.size > 1)
+    index( parents, html)
 
     if has_any_content?
       html.start_div( 'story t1')

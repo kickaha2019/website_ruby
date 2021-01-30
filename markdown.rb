@@ -15,10 +15,11 @@ class Markdown
   end
 
   def initialize( defn)
-    @defn     = defn
-    @doc      = CommonMarker.render_doc( defn, [:UNSAFE], [:table])
-    @html     = []
-    @injected = {}
+    @defn            = defn
+    @doc             = CommonMarker.render_doc( defn, [:UNSAFE], [:table])
+    @html            = []
+    @injected        = {}
+    @has_only_images = true
   end
 
   def char_count( snippet)
@@ -34,6 +35,10 @@ class Markdown
   def first_image
     return nil if @images.size < 1
     @images.values[0].image
+  end
+
+  def has_only_images?
+    @has_only_images
   end
 
   def inject( index, raw)
@@ -93,6 +98,7 @@ class Markdown
       elsif line == ''
         spaced = true
       elsif clump.size > 0
+        @has_only_images = false
         if clump.size > 1
           prepare_gallery( compiler, article, images, clump)
         else

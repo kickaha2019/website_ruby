@@ -168,10 +168,6 @@ class Compiler
       end
     end
 
-    if images = defn['images']
-      article.set_images( images)
-    end
-
     if links = defn['links']
       links.each do |link|
         article.add_child( Link.new( article, link['path'], link['tag']))
