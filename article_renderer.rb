@@ -26,40 +26,39 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
   def image(node)
     if @images[node.url]
       info = @images[node.url]
-      send( ("image_" + info[0]).to_sym, node, info[1], info[2])
+      send( ("image_" + info.mode).to_sym, info)
     else
       @article.error( "Unprocessed image #{node.url}")
     end
   end
 
-  def image_centre( node, image, caption)
-    image_out( node, image,'image', 'centre', :prepare_source_image)
+  def image_centre( info)
+    image_out( info, 'centre', :prepare_source_image)
   end
 
-  def image_end_gallery( node, image, caption)
-    image_inside_gallery( node, image, caption)
+  def image_end_gallery( info)
+    image_inside_gallery( info)
     out( '</DIV CLASS>')
   end
 
-  def image_float( node, image, side)
-    image_out( node, image, 'icon', side, :prepare_thumbnail)
+  def image_float( info, side)
+    image_out( info, side, :prepare_thumbnail)
   end
 
-  def image_inside_gallery( node, image, caption)
+  def image_inside_gallery( info)
     out( '<DIV>')
-    image_out( node, image, 'icon', '', :prepare_thumbnail)
-    out( caption, '</DIV>')
+    image_out( info, '', :prepare_thumbnail)
+    out( info.caption, '</DIV>')
   end
 
-  def image_left( node, image, caption)
-    image_float( node, image, 'left')
+  def image_left( info)
+    image_float( info, 'left')
   end
 
-  def image_out( node, image, size, side, prepare)
-    raw   = ["<A CLASS=\"#{side}\" HREF=\"\">"]
-    dims  = @article.get_scaled_dims( @compiler.dimensions( size), [image])
+  def image_out( info, side, prepare)
+    raw = ["<A CLASS=\"#{side}\" HREF=\"\">"]
 
-    image.prepare_images( dims, prepare) do |image, w, h, sizes|
+    info.image.prepare_images( info.dims, prepare) do |image, w, h, sizes|
       @compiler.record( image)
       rp = relative_path( @article.sink_filename, image)
       raw << "<IMG CLASS=\"#{sizes}\" SRC=\"#{rp}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" ALT=\"#{prettify(@article.title)} picture\">"
@@ -69,13 +68,13 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
     out( raw.join(''))
   end
 
-  def image_right( node, image, caption)
-    image_float( node, image, 'right')
+  def image_right( info)
+    image_float( info, 'right')
   end
 
-  def image_start_gallery( node, image, caption)
+  def image_start_gallery( info)
     out( '<DIV CLASS="gallery t1">')
-    image_inside_gallery( node, image, caption)
+    image_inside_gallery( info)
   end
 
   def link(node)

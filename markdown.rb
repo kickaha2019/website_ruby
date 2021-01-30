@@ -4,6 +4,16 @@ require 'utils'
 class Markdown
   include Utils
 
+  class ImageInfo
+    attr_reader :dims, :mode, :image, :caption
+    def initialize( image, caption, mode, dims)
+      @image   = image
+      @caption = caption
+      @mode    = mode
+      @dims    = dims
+    end
+  end
+
   def initialize( defn)
     @defn     = defn
     @doc      = CommonMarker.render_doc( defn, [:UNSAFE], [:table])
@@ -23,7 +33,7 @@ class Markdown
 
   def first_image
     return nil if @images.size < 1
-    @images.values[0][1]
+    @images.values[0].image
   end
 
   def inject( index, raw)
@@ -46,18 +56,17 @@ class Markdown
   end
 
   def prepare_gallery( compiler, article, images, clump)
-    prepare_image( compiler, article, images, clump[0], 'start_gallery')
-    clump[1..-2].each {|image| prepare_image( compiler, article, images, image, 'inside_gallery')}
-    prepare_image( compiler, article, images, clump[-1], 'end_gallery')
+    dims = article.get_scaled_dims( compiler.dimensions( 'icon'), clump.collect {|c| c[2]})
+    prepare_image( article, images, clump[0], 'start_gallery', dims)
+    clump[1..-2].each {|image| prepare_image( article, images, image, 'inside_gallery', dims)}
+    prepare_image( article, images, clump[-1], 'end_gallery', dims)
   end
 
-  def prepare_image( compiler, article, images, info, mode)
+  def prepare_image( article, images, info, mode, dims)
     if images[info[0]]
       article.error( "Duplicate image #{url}")
     else
-      path  = article.abs_filename( article.source_filename, info[0])
-      image = article.describe_image( compiler, path, nil)
-      images[info[0]] = [mode, image, info[1]]
+      images[info[0]] = ImageInfo.new( info[2], info[1], mode, dims)
     end
   end
 
@@ -75,14 +84,17 @@ class Markdown
           article.error( "Bad image declaration for #{m[2]}")
         end
         html = CommonMarker.render_html( m[1], :DEFAULT)
-        clump << [m[2], html]
+        path  = article.abs_filename( article.source_filename, m[2])
+        image = article.describe_image( compiler, path, nil)
+        clump << [m[2], html, image]
       elsif line == ''
         spaced = true
       elsif clump.size > 0
         if clump.size > 1
           prepare_gallery( compiler, article, images, clump)
         else
-          prepare_image( compiler, article, images, clump[0], spaced ? 'centre' : (even ? 'right' : 'left'))
+          dims = article.get_scaled_dims( compiler.dimensions( 'icon'), [clump[0][2]])
+          prepare_image( article, images, clump[0], spaced ? 'centre' : (even ? 'right' : 'left'), dims)
           even = ! even
         end
         clump, spaced = [], false
