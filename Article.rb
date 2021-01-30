@@ -184,17 +184,9 @@ class Article
     text_chars > 300
   end
 
-  def has_picture_page?( parents)
-    return false              if @images.size == 0
-    return has_much_content?  if @images.size >= 2
-    return true               if @children.size > 0
-    return false              if @date.nil?
-    ! parents[-1].date.nil?
-  end
-
   def icon
     return @icon if @icon
-    return @images[0] if @images.size > 0
+    return @markdown.first_image if @markdown && @markdown.first_image
 
     children.each do |child|
       if icon = child.icon
@@ -206,12 +198,8 @@ class Article
   end
 
   def index( parents, html, pictures)
-    wrap = @markdown ? @markdown.wrap? : true
-    wrap = false if /\.php$/ =~ @sink_filename
-
     if @children.size > 0
       to_index = children
-      error( 'Some content does not wrap but has children') unless wrap  || @no_index
     else
       to_index = siblings( parents) # .select {|a| a != self}
     end
@@ -220,8 +208,8 @@ class Article
       html.no_indexes
       return
     end
-    html.small_no_indexes unless wrap
 
+    html.small_no_indexes
     html.start_indexes
 
     if index_images?( to_index)
@@ -340,9 +328,6 @@ class Article
     end
 
     if @markdown
-      if has_picture_page?( parents)
-        @markdown.prepare_floats( compiler, self)
-      end
       @markdown.prepare( compiler, self)
     end
   end
@@ -358,26 +343,6 @@ class Article
       words << "..."
     end
     words.join( "&nbsp;")
-  end
-
-  def prepare_source_images( html, do_caption)
-    html.small_no_indexes
-    html.start_div( 'gallery t1')
-
-    dims = html.dimensions( 'image')
-    @images.each do |image|
-      image.prepare_images( dims, :prepare_source_image) do |file, w, h, sizes|
-        html.image( file, w, h, nil, sizes)
-      end
-
-      if do_caption
-        if image.tag
-          html.add_caption( self, image.tag)
-        end
-      end
-    end
-
-    html.end_div
   end
 
   def report_errors( compiler)
@@ -462,34 +427,15 @@ class Article
     @title ? @title : "Home"
   end
 
-  def to_pictures( parents, html)
-    html.start_page( parents[0].title)
-    html.breadcrumbs( parents + [self], 'Pictures', false)
-    html.start_div( 'payload content')
-    index( parents, html, false)
-    prepare_source_images( html, true)
-    html.end_div
-    html.end_page
-  end
-
   def to_html( parents, html)
     html.start_page( parents[0] ? parents[0].title : @title)
-
-    if has_picture_page?( parents)
-      html.breadcrumbs( parents, title, true)
-    else
-      html.breadcrumbs( parents, title, false) if parents.size > 0
-    end
+    html.breadcrumbs( parents, title, false) if parents.size > 0
     html.start_div( 'payload content')
 
     index( parents, html, images.size > 1)
 
     if has_any_content?
       html.start_div( 'story t1')
-    end
-
-    if (images.size == 1) && (! has_picture_page?( parents))
-      prepare_source_images( html, false)
     end
 
     if has_any_content? && @date
@@ -499,10 +445,6 @@ class Article
     end
 
     @markdown.process( self, parents, html) if @markdown
-
-    if (@images.size > 1) && (! has_picture_page?( parents))
-      prepare_source_images( html, true)
-    end
 
     if has_any_content?
       html.end_div

@@ -34,7 +34,7 @@ class Link
 	end
 
 	def icon
-		@icon_source.icon
+		@icon_source ? @icon_source.icon : nil
 	end
 
 	def prepare( compiler, parents)
@@ -46,7 +46,7 @@ class Link
 			@sink_filename = bound.sink_filename
 			@title         = bound.title unless @title
 		else
-			@article.error( 0, error)
+			@article.error( error)
 		end
 	end
 end

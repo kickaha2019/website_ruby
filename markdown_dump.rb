@@ -27,6 +27,8 @@ def dump_structure( node, indent, io)
     io.puts "#{indent}Header: #{node.header_level}"
   elsif node.type == :html
     io.puts "#{indent}HTML: #{node.string_content}"
+  elsif node.type == :image
+    io.puts "#{indent}Image: url=#{node.url} title=#{node.title}"
   elsif node.type == :inline_html
     io.puts "#{indent}Inline HTML:"
   elsif node.type == :link

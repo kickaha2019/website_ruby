@@ -9,9 +9,9 @@ require 'openssl'
 require 'cgi'
 
 class LinkChecker
-	ARTICLES='/Users/peter/OneDrive/Website/articles'
-	DATABASE='/Users/peter/OneDrive/Website/data/website.sqlite'
-	LAST_CHECKED='/Users/peter/OneDrive/Website/data/last_checked.yaml'
+	ARTICLES='/Users/peter/Synch/Website/articles'
+	DATABASE='/Users/peter/Synch/Website/data/website.sqlite'
+	LAST_CHECKED='/Users/peter/Synch/Website/data/last_checked.yaml'
 	TABLES={'dramas'=>['name','url'],
 			'films'=>['name','url']}
 	MAX_ERRS = 50

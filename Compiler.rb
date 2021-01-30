@@ -77,6 +77,7 @@ class Compiler
   end
 
   def debug_hook( article)
+    # puts "DEBUG100: #{article.sink_filename}"
     if @debug_pages && (@debug_pages =~ article.sink_filename)
       puts "Debugging #{article.title}"
     end
@@ -102,6 +103,7 @@ class Compiler
     # Loop over source files - skip image files and other specials
     Dir.entries( @source + path).each do |file|
       next if /^\./ =~ file
+      # next if 'gallery.md' == file
       next if (path == '') && ['resources', 'templates', 'README.md','dimensions.yaml','links.yaml'].include?( file)
       path1 = path + "/" + file
 
@@ -252,14 +254,14 @@ class Compiler
     end
 #    end
 
-    if article.has_picture_page?( parents)
-      html = HTML.new( self, @sink, article.picture_sink_filename)
-      html.start
-      article.to_pictures( parents, html)
-      html.finish do |error|
-        article.error( error)
-      end
-    end
+    # if article.has_picture_page?( parents)
+    #   html = HTML.new( self, @sink, article.picture_sink_filename)
+    #   html.start
+    #   article.to_pictures( parents, html)
+    #   html.finish do |error|
+    #     article.error( error)
+    #   end
+    # end
 
     article.children.each do |child|
       regenerate( parents + [article], child) if child.is_a?( Article)
@@ -320,7 +322,7 @@ class Compiler
   end
 
   def sync_resources( from, to, match)
-    Dir.mkdir( from) unless File.exist?( to)
+    Dir.mkdir( to) unless File.exist?( to)
     Dir.entries( from).each do |f|
       next unless match =~ f
       input = from + '/' + f
