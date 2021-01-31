@@ -96,7 +96,7 @@ class Markdown
         image = article.describe_image( compiler, path, nil)
         clump << [m[2], html, image]
       elsif line == ''
-        spaced = true
+        spaced = (clump.size > 0)
       elsif clump.size > 0
         @has_only_images = false
         if clump.size > 1
