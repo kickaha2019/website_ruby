@@ -46,12 +46,12 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
   end
 
   def image_float( info, side)
-    image_out( info, side, :prepare_thumbnail)
+    image_wrapped( info, side, :prepare_thumbnail)
   end
 
   def image_inside_gallery( info)
     out( '<DIV><DIV>')
-    image_out( info, '', :prepare_thumbnail)
+    image_wrapped( info, '', :prepare_thumbnail)
     out( '</DIV>', '<DIV>', info.caption, '</DIV></DIV>')
   end
 
@@ -59,17 +59,12 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
     image_float( info, 'left')
   end
 
-  def image_out( info, side, prepare)
-    raw = ["<A CLASS=\"#{side}\" HREF=\"\">"]
-
+  def image_out( info, side, prepare, inject='')
     info.image.prepare_images( info.dims, prepare) do |image, w, h, sizes|
       @compiler.record( image)
       rp = relative_path( @article.sink_filename, image)
-      raw << "<IMG CLASS=\"#{sizes}\" SRC=\"#{rp}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" ALT=\"#{prettify(@article.title)} picture\">"
+      out "<IMG CLASS=\"#{sizes} #{side}\" SRC=\"#{rp}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" ALT=\"#{prettify(@article.title)} picture\"#{inject}>"
     end
-
-    raw << '</A>'
-    out( raw.join(''))
   end
 
   def image_right( info)
@@ -79,6 +74,28 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
   def image_start_gallery( info)
     out( '<DIV CLASS="gallery t1">')
     image_inside_gallery( info)
+  end
+
+  def image_wrapped( info, side, prepare)
+    inject = [' onclick="javascript: showOverlay(']
+    sized_images = []
+
+    dims = @article.get_scaled_dims( @compiler.dimensions( 'image'), [info.image])
+    info.image.prepare_images( dims, :prepare_source_image) do |image, w, h, sizes|
+      @compiler.record( image)
+      sizes.split(' ').each do |size|
+        sized_images[size[-1..-1].to_i] = image
+      end
+    end
+
+    separ = ''
+    sized_images[1..-1].each do |image|
+      inject << "#{separ}'#{image}'"
+      separ = ','
+    end
+
+    inject << ');"'
+    image_out( info, side, prepare, inject.join(''))
   end
 
   def link(node)

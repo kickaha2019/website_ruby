@@ -102,11 +102,13 @@ class Markdown
         if clump.size > 1
           prepare_gallery( compiler, article, images, clump)
         else
-          dims = article.get_scaled_dims( compiler.dimensions( 'icon'), [clump[0][2]])
+          dims = article.get_scaled_dims( compiler.dimensions( spaced ? 'image' : 'icon'), [clump[0][2]])
           prepare_image( article, images, clump[0], spaced ? 'centre' : (even ? 'right' : 'left'), dims)
           even = ! even
         end
         clump, spaced = [], false
+      else
+        @has_only_images = false
       end
     end
 
