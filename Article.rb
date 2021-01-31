@@ -174,8 +174,8 @@ class Article
     ! @markdown.nil?
   end
 
-  def has_only_images?
-    @markdown && @markdown.has_only_images?
+  def has_gallery?
+    @markdown && @markdown.has_gallery?
   end
 
   def icon
@@ -194,7 +194,7 @@ class Article
   def index( parents, html)
     if @children.size > 0
       to_index = children
-    elsif has_only_images?
+    elsif has_gallery?
       to_index = []
     else
       to_index = siblings( parents) # .select {|a| a != self}
