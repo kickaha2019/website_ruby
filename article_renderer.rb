@@ -42,7 +42,7 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
     (0..7).each do
       out( '<DIV CLASS="dummy size1 size2 size3"></DIV>')
     end
-    out( '</DIV CLASS>')
+    out( '</DIV>')
   end
 
   def image_float( info, side)
@@ -127,14 +127,16 @@ class ArticleRenderer < CommonMarker::HtmlRenderer
   def paragraph( node)
     if node.parent.type == :document
       if @do_para
-        out( '<p>', :children, '</p>')
+        out( '<p></p>', :children)
       else
         out( :children)
         @do_para = true
       end
       @top_para += 1
+#    elsif has_text?( node)
+#      super
     else
-      super
+      out( '<p></p>', :children)
     end
   end
 
