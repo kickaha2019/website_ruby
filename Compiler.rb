@@ -103,7 +103,6 @@ class Compiler
     # Loop over source files - skip image files and other specials
     Dir.entries( @source + path).each do |file|
       next if /^\./ =~ file
-      # next if 'gallery.md' == file
       next if (path == '') && ['resources', 'templates', 'README.md','dimensions.yaml','links.yaml'].include?( file)
       path1 = path + "/" + file
 
@@ -113,9 +112,9 @@ class Compiler
       elsif m = /^(.*)\.md$/.match( file)
         child = dir_articles[m[1]]
         parse_md( path, file, child)
-      elsif m = /^(.*)\.yaml$/.match( file)
-        child = dir_articles[m[1]]
-        parse_yaml( path, file, child)
+      # elsif m = /^(.*)\.yaml$/.match( file)
+      #   child = dir_articles[m[1]]
+      #   parse_yaml( path, file, child)
       elsif /\.(JPG|jpg|JPEG|jpeg|png|zip|rb|kml|afphoto|command|erb|pdf)$/ =~ file
         remember( path1, @source + path1)
       else
@@ -128,12 +127,29 @@ class Compiler
 
   def parse_md( path, file, article)
     debug_hook( article)
-    article.add_markdown( IO.read( @source + path + "/" + file))
+    text = IO.read( @source + path + "/" + file)
+    lines = text.split( "\n")
+
+    if /^---/ =~ lines[0]
+      end_yaml = 1
+      while ! (/^---/ =~ lines[end_yaml])
+        end_yaml += 1
+      end
+
+      if /---/ =~ lines[end_yaml+1]
+        article.error( 'Duplicated front matter')
+      end
+
+      parse_yaml( lines[0..end_yaml-1].join("\n"), article)
+      text = lines[end_yaml+1..-1].join("\n")
+    end
+
+    article.add_markdown( text) if text.strip != ''
   end
 
-  def parse_yaml( path, file, article)
+  def parse_yaml( defn, article)
     debug_hook( article)
-    defn = YAML.load( IO.read( @source + path + "/" + file))
+    defn = YAML.load( defn)
 
     if title = defn['title']
       if /[\["\|&<>]/ =~ title
