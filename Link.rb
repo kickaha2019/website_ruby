@@ -5,13 +5,14 @@
 =end
 
 class Link
-  attr_reader :date, :icon, :sink_filename, :title
+  attr_reader :date, :time, :icon, :sink_filename, :title
 
 	def initialize( article, link, title=nil)
 		@article       = article
 		@link          = link
 		@title         = title
 		@blurb         = nil
+		@time          = nil
 		@date          = nil
     @icon_source   = nil
     @sink_filename = nil
@@ -29,22 +30,27 @@ class Link
 		false
 	end
 
+	def error( message)
+		@article.error( message)
+	end
+
 	def has_content?
 		false
 	end
 
-	def icon
-		@icon_source ? @icon_source.icon : nil
+	def icon( defval=nil)
+		@icon_source ? @icon_source.icon(defval) : defval
 	end
 
 	def prepare( compiler, parents)
 		bound, error = compiler.lookup( @link)
 		if bound
-			@blurb         = bound.blurb
-			@date          = bound.date
-			@icon_source   = bound
-			@sink_filename = bound.sink_filename
-			@title         = bound.title unless @title
+			@blurb            = bound.blurb
+			@time             = bound.time
+			@date             = bound.date
+			@icon_source      = bound
+			@sink_filename    = bound.sink_filename
+			@title            = bound.title unless @title
 		else
 			@article.error( error)
 		end

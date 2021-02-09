@@ -11,7 +11,7 @@ require 'utils'
 
 class Article
   include Utils
-  attr_accessor :content_added, :sink_filename, :blurb
+  attr_accessor :content_added, :sink_filename, :blurb, :time
 
   class BackstopIcon < Image
     def initialize( sink)
@@ -32,14 +32,15 @@ class Article
     @sink_filename   = sink
     @children        = []
     @children_sorted = true
-    @icon            = nil
+    @metadata        = {}
     @errors          = []
-    @markdown        = nil
-    @date            = nil
-    @blurb           = nil
+    @markdown        = []
     @no_index        = false
+    @time            = nil
 
-    set_title( name)
+    els = source.split('/')
+    els = els[0..-2] if els[-1] == 'index'
+    set_title( prettify( els[-1]))
   end
 
   def add_child( article)
@@ -53,7 +54,18 @@ class Article
   end
 
   def add_markdown( defn)
-    @markdown = Markdown.new( defn)
+    @markdown = defn.split( "\n")
+  end
+
+  def check_for_bad_characters
+    @markdown.each do |line|
+      ok = true
+      line.bytes { |b| ok = false if b > 127}
+      if not ok
+        error( "Non-ASCII characters in markdown: #{line}")
+        return
+      end
+    end
   end
 
   def children
@@ -69,7 +81,7 @@ class Article
   end
 
   def date
-    @date # ? @date : Time.gm( 1970, "Jan", 1)
+    @metadata['date']
   end
 
   def describe_image( compiler, image_filename, tag)
@@ -171,16 +183,15 @@ class Article
   end
 
   def has_any_content?
-    ! @markdown.nil?
+    @markdown.join('').strip != ''
   end
 
   def has_gallery?
-    @markdown && @markdown.has_gallery?
+    @metadata['gallery']
   end
 
-  def icon
+  def icon( defval = nil)
     return @icon if @icon
-    return @markdown.first_image if @markdown && @markdown.first_image
 
     children.each do |child|
       if icon = child.icon
@@ -188,7 +199,7 @@ class Article
       end
     end
 
-    nil
+    defval
   end
 
   def index( parents, html)
@@ -279,15 +290,17 @@ class Article
   end
 
   def prepare( compiler, parents)
-    if @icon
+    check_for_bad_characters
+
+    if @metadata['icon']
       err = nil
 
-      if /^\// =~ @icon
-        path = @icon
+      if /^\// =~ @metadata['icon']
+        path = compiler.source + @metadata['icon']
       else
-        path = abs_filename( @source_filename, @icon)
+        path = abs_filename( @source_filename, @metadata['icon'])
         if ! File.exists?( path)
-          path, err = compiler.lookup( @icon)
+          path, err = compiler.lookup( @metadata['icon'])
         end
       end
 
@@ -297,10 +310,13 @@ class Article
         error( err ? err : "Icon #{@icon} not found")
         @icon = nil
       end
-    end
-
-    if @markdown
-      @markdown.prepare( compiler, self)
+    else
+      @markdown.each do |line|
+        if m = /^!\[.*\]\((.*)\)/.match( line)
+          @icon = describe_image( compiler, abs_filename( source_filename, m[1]), nil) unless @icon
+          break
+        end
+      end
     end
   end
 
@@ -325,29 +341,198 @@ class Article
     @blurb = b
   end
 
-  def set_date( t)
-    @date = t if @date.nil?
+  def set_date_and_time( d, t)
+    if @metadata['date'].nil?
+      @metadata['date'] = d
+      @time = t
+    end
   end
 
   def set_icon( path)
-    @icon = path
+    @metadata['icon'] = path
   end
 
   def set_no_index
     @no_index = true
   end
 
-  def set_php
-    return if /\.php$/ =~ @sink_filename
-    if m = /^(.*)\.html$/.match( @sink_filename)
-      @sink_filename = m[1] + '.php'
-    else
-      error( 'Unable to set page to PHP')
+  # def set_php
+  #   return if /\.php$/ =~ @sink_filename
+  #   if m = /^(.*)\.html$/.match( @sink_filename)
+  #     @sink_filename = m[1] + '.php'
+  #   else
+  #     error( 'Unable to set page to PHP')
+  #   end
+  # end
+
+  def set_title( title)
+    @metadata['title'] = title
+  end
+
+  def setup_breadcrumbs( parents)
+    @metadata['breadcrumbs'] = parents.collect do |parent|
+      {'title' => prettify( parent.title),
+       'path'  => relative_path( @sink_filename, parent.sink_filename)}
+    end
+    @metadata['breadcrumbs'] << {'title' => prettify(title)}
+  end
+
+  def setup_gallery( compiler)
+    gallery = []
+    start   = 1000000
+
+    @markdown.each_index do |i|
+      if /^!\[/ =~ @markdown[i]
+        start = i unless start < i
+        gallery << @markdown[i]
+      elsif @markdown[i].strip != ''
+        start, gallery = 1000000, []
+      end
+    end
+
+    if gallery.size > 0
+      @markdown = @markdown[0...start]
+      gallery = gallery.collect do |line|
+        if m = /^!\[(.*)\]\((.*)\)/.match( line.strip)
+          path = abs_filename( source_filename, m[2])
+          [CommonMarker.render_html( m[1], :DEFAULT), describe_image( compiler, path, nil)]
+        else
+          error( "Bad image definition: " + line)
+          nil
+        end
+      end.select {|entry| entry}
+
+      icon_dims = get_scaled_dims( compiler.dimensions( 'icon'), gallery.collect {|c| c[1]})
+      @metadata['gallery'] = gallery.collect do |rec|
+        entry = {'title' => rec[0]}
+        entry['icons'] = setup_image( compiler, rec[1], icon_dims, :prepare_thumbnail, '', true)
+        entry
+      end
     end
   end
 
-  def set_title( title)
-    @title = title
+  def setup_image( compiler, image_desc, dims, prepare, side='', wrap=false)
+    recs = []
+
+    image_desc.prepare_images( dims, prepare) do |image, w, h, sizes|
+      compiler.record( image)
+      rp = relative_path( sink_filename, image)
+
+      inject = []
+      if wrap
+        wrap_dims = get_scaled_dims( compiler.dimensions( 'image'), [image_desc])
+        inject << ' onclick="javascript: showOverlay('
+        sized_images = []
+        image_desc.prepare_images( wrap_dims, :prepare_source_image) do |image, w, h, sizes|
+          compiler.record( image)
+          sizes.split(' ').each do |size|
+            sized_images[size[-1..-1].to_i] = image
+          end
+        end
+
+        separ = ''
+        sized_images[1..-1].each do |image|
+          inject << "#{separ}'#{image}'"
+          separ = ','
+        end
+
+        inject << ');"'
+      end
+      recs << "<IMG CLASS=\"#{sizes} #{side}\" SRC=\"#{rp}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" ALT=\"#{prettify(title)} picture\"#{inject.join('')}>"
+    end
+
+    recs.join('')
+  end
+
+  def setup_images( compiler)
+    even = true
+    @markdown.each_index do |i|
+      if m = /^!\[(.*)\]\((.*)\)/.match( @markdown[i].strip)
+        path       = abs_filename( source_filename, m[2])
+        desc       = describe_image( compiler, path, nil)
+        inset      = ((i+1) < @markdown.size) && (@markdown[i+1].strip != '')
+        icon_dims  = get_scaled_dims( compiler.dimensions( 'icon'), [desc])
+
+        side = inset ? (even ? 'right' : 'left') : ''
+        @markdown[i] = setup_image( compiler, desc, icon_dims, :prepare_thumbnail, side, inset)
+        even = ! even if inset
+      end
+    end
+  end
+
+  def setup_index( compiler, parents)
+    if @children.size > 0
+      to_index = children
+    else
+      to_index = siblings( parents) # .select {|a| a != self}
+    end
+
+    backstop = BackstopIcon.new( compiler.sink_filename( "/resources/down_cyan.png"))
+    index_dims = get_scaled_dims( compiler.dimensions( 'icon'), to_index.collect {|r| r.icon( backstop)})
+
+    @metadata['index'] = to_index.collect do |relative|
+      {'title'    => relative.title,
+       'tooltip'  => relative.blurb,
+       'path'     => relative_path( sink_filename, relative.sink_filename),
+       'icon'     => setup_image( compiler, relative.icon( backstop), index_dims, :prepare_thumbnail),
+       'selected' => (self == relative)}
+    end
+  end
+
+  def setup_link( compiler, link)
+    if /^(http|https|mailto):/ =~ link
+      link
+    elsif /\.(html|php)$/ =~ link
+      relative_path( sink_filename, link)
+    elsif /\.(jpeg|jpg|png|gif)$/i =~ link
+      error( "Link to image: #{link}")
+      ''
+    else
+      url = compiler.link( link)
+      unless url
+        ref, err = compiler.lookup( link)
+        if err
+          error( err)
+          url = ''
+        else
+          url = relative_path( sink_filename, ref.sink_filename)
+        end
+      end
+      url
+    end
+  end
+
+  def setup_links( compiler)
+    @markdown.each_index do |i|
+      @markdown[i] = setup_links_in_text( compiler, @markdown[i]) unless /^\s*!\[/ =~ @markdown[i]
+    end
+  end
+
+  def setup_links_in_text( compiler, text)
+    if m = /^(.*)\[([^\]]*)\]\(([^\)]*)\)(.*)$/.match( text)
+      setup_links_in_text( compiler, m[1]) + "[#{m[2]}](" + setup_link( compiler, m[3]) + ')' + setup_links_in_text( compiler, m[4])
+    else
+      text
+    end
+  end
+
+  def setup_layout
+    return if @metadata['layout']
+
+    @metadata['layout'] = 'index'
+    if @no_index ||
+       (@metadata['index'].size == 0) ||
+       ((@children.size == 0) && @metadata['gallery'])
+      @metadata['layout'] = 'noindex'
+    end
+
+    if has_any_content?
+      @metadata['layout'] += '_content'
+    end
+  end
+
+  def setup_root_path( root_dir)
+    @metadata['root'] = relative_path( File.dirname(@source_filename), root_dir)
   end
 
   def siblings( parents)
@@ -371,13 +556,13 @@ class Article
         1
 
       # Next try for dates
-      elsif a1.date
-        if a2.date
-          a1.date <=> a2.date
+      elsif a1.time
+        if a2.time
+          a1.time <=> a2.time
         else
           -1
         end
-      elsif a2.date
+      elsif a2.time
         1
 
       # Lastly case insensitive sort on titles
@@ -392,7 +577,7 @@ class Article
   end
 
   def title
-    @title ? @title : "Home"
+    @metadata['title']
   end
 
   def to_html( parents, html)
@@ -406,8 +591,8 @@ class Article
       html.start_div( 'story t1')
     end
 
-    if has_any_content? && @date
-      html.date( @date) do |err|
+    if has_any_content? && date
+      html.date( date) do |err|
         error( err)
       end
     end
@@ -419,5 +604,12 @@ class Article
     end
     html.end_div
     html.end_page
+  end
+
+  def to_jekyll
+    lines = [@metadata.to_yaml]
+    lines << '---'
+    lines += @markdown
+    lines.join( "\n")
   end
 end

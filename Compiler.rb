@@ -55,18 +55,20 @@ class Compiler
   def compile
 
     # Load the templates
-    load_templates
+    # load_templates
 
     # Parse all the articles recursively
     @articles = parse( nil, "")
 
     # Sync the resource files
-    sync_resources( @source + '/resources', @sink + '/resources', /\.(png|css|jpg)$/)
+    config = YAML.load( IO.read( @source + '/_config.yml'))
+    sync_resources( config, @source + '/resources', @sink + '/resources', /\.(png|css|jpg)$/)
+    File.open( @sink + '/_config.yml', 'w') {|io| io.puts config.to_yaml}
 
     # Prepare the articles now all articles parsed
     prepare( [], @articles)
 
-    # Regenerate the HTML files
+    # Regenerate the Jekyll files
     regenerate( [], @articles)
 
     # Delete files not regenerated
@@ -87,13 +89,13 @@ class Compiler
   def parse( parent, path)
 
     # Article for the directory
-    dir_article = Article.new( @source + path + '/index', @sink + path + '/index.html')
+    dir_article = Article.new( @source + path + '/index', @sink + path + '/index.md')
     remember( path, dir_article)
     parent.add_child( dir_article) if parent
 
     # Hash of articles in this directory
     dir_articles = Hash.new do |h,k|
-      a = Article.new( @source + path + '/' + k, @sink + path + '/' + k + '.html')
+      a = Article.new( @source + path + '/' + k, @sink + path + '/' + k + '.md')
       dir_article.add_child( a)
       remember( path + '/' + k, a)
       h[k] = a
@@ -103,6 +105,7 @@ class Compiler
     # Loop over source files - skip image files and other specials
     Dir.entries( @source + path).each do |file|
       next if /^\./ =~ file
+      next if /^_/ =~ file
       next if (path == '') && ['resources', 'templates', 'README.md','dimensions.yaml','links.yaml'].include?( file)
       path1 = path + "/" + file
 
@@ -165,7 +168,7 @@ class Compiler
 
     if date = defn['date']
       t = convert_date( article, date)
-      article.set_date( t)
+      article.set_date_and_time( format_date(t), t)
     end
 
     if icon = defn['icon']
@@ -174,14 +177,6 @@ class Compiler
 
     if noindex = defn['no_index']
       article.set_no_index
-    end
-
-    if ext = defn['extension']
-      if ext == 'php'
-        article.set_php
-      else
-        article.error( "Extension #{ext} not supported")
-      end
     end
 
     if links = defn['links']
@@ -256,24 +251,18 @@ class Compiler
 
   def regenerate( parents, article)
     debug_hook( article)
+    record( article.sink_filename)
 
-#    if article.has_content? || (! article.has_picture_page?)
-    html = HTML.new( self, @sink, article.sink_filename)
-    html.start
-    article.to_html( parents, html)
-    html.finish do |error|
-      article.error( error)
+    File.open( article.sink_filename, 'w') do |io|
+      article.setup_root_path( @source)
+      article.setup_breadcrumbs( parents)
+      article.setup_gallery( self)
+      article.setup_index( self, parents)
+      article.setup_images( self)
+      article.setup_links( self)
+      article.setup_layout
+      io.puts article.to_jekyll
     end
-#    end
-
-    # if article.has_picture_page?( parents)
-    #   html = HTML.new( self, @sink, article.picture_sink_filename)
-    #   html.start
-    #   article.to_pictures( parents, html)
-    #   html.finish do |error|
-    #     article.error( error)
-    #   end
-    # end
 
     article.children.each do |child|
       regenerate( parents + [article], child) if child.is_a?( Article)
@@ -299,7 +288,7 @@ class Compiler
       return @sink + file[(@source.size)..-1]
     end
     if m = /^(\/resources\/)(.*)$/.match( file)
-      return @sink + m[1] + @variables[m[2]]
+      return @sink + m[1] + m[2]
     end
     file
   end
@@ -308,6 +297,7 @@ class Compiler
     keep = false
     Dir.entries( path).each do |f|
       next if /^\./ =~ f
+      next if /^_/ =~ f
       path1 = path + '/' + f
       if File.directory?( path1)
         if tidy_up( path1)
@@ -333,13 +323,17 @@ class Compiler
     path
   end
 
-  def sync_resources( from, to, match)
+  def source
+    @source
+  end
+
+  def sync_resources( config, from, to, match)
     Dir.mkdir( to) unless File.exist?( to)
     Dir.entries( from).each do |f|
       next unless match =~ f
       input = from + '/' + f
       f1 = f.split('.')[0] + "_#{File.mtime(input).to_i}." + f.split('.')[1]
-      @variables[f] = f1
+      config[f.gsub('.','_')] = f1
       output = to + '/' + f1
       record( output)
       unless File.exist?( output)
