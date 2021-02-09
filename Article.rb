@@ -32,7 +32,7 @@ class Article
     @sink_filename   = sink
     @children        = []
     @children_sorted = true
-    @metadata        = {}
+    @metadata        = {'date' => nil, 'gallery' => nil}
     @errors          = []
     @markdown        = []
     @no_index        = false
@@ -374,7 +374,7 @@ class Article
       {'title' => prettify( parent.title),
        'path'  => relative_path( @sink_filename, parent.sink_filename)}
     end
-    @metadata['breadcrumbs'] << {'title' => prettify(title)}
+    @metadata['breadcrumbs'] << {'title' => prettify(title), 'path' => false}
   end
 
   def setup_gallery( compiler)
