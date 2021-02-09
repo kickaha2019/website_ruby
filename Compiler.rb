@@ -89,13 +89,13 @@ class Compiler
   def parse( parent, path)
 
     # Article for the directory
-    dir_article = Article.new( @source + path + '/index', @sink + path + '/index.md')
+    dir_article = Article.new( @source + path + '/index', @sink + path + '/index.html')
     remember( path, dir_article)
     parent.add_child( dir_article) if parent
 
     # Hash of articles in this directory
     dir_articles = Hash.new do |h,k|
-      a = Article.new( @source + path + '/' + k, @sink + path + '/' + k + '.md')
+      a = Article.new( @source + path + '/' + k, @sink + path + '/' + k + '.html')
       dir_article.add_child( a)
       remember( path + '/' + k, a)
       h[k] = a
@@ -251,9 +251,10 @@ class Compiler
 
   def regenerate( parents, article)
     debug_hook( article)
-    record( article.sink_filename)
+    sink_filename = article.sink_filename.gsub( '.html', '.md').gsub( '.php', '.md')
+    record( sink_filename)
 
-    File.open( article.sink_filename, 'w') do |io|
+    File.open( sink_filename, 'w') do |io|
       article.setup_root_path( @source)
       article.setup_breadcrumbs( parents)
       article.setup_gallery( self)
@@ -332,13 +333,16 @@ class Compiler
     Dir.entries( from).each do |f|
       next unless match =~ f
       input = from + '/' + f
-      f1 = f.split('.')[0] + "_#{File.mtime(input).to_i}." + f.split('.')[1]
-      config[f.gsub('.','_')] = f1
-      output = to + '/' + f1
-      record( output)
-      unless File.exist?( output)
-        FileUtils.cp( input, output)
+      output = to + '/' + f
+
+      if /\.(css|js)$/ =~ f
+        f1 = f.split('.')[0] + "_#{File.mtime(input).to_i}." + f.split('.')[1]
+        config[f.gsub('.','_')] = f1
+        output = to + '/' + f1
       end
+
+      record( output)
+      FileUtils.cp( input, output)
     end
   end
 

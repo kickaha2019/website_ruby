@@ -11,7 +11,7 @@ require 'utils'
 
 class Article
   include Utils
-  attr_accessor :content_added, :sink_filename, :blurb, :time
+  attr_accessor :content_added, :blurb, :time
 
   class BackstopIcon < Image
     def initialize( sink)
@@ -40,7 +40,7 @@ class Article
 
     els = source.split('/')
     els = els[0..-2] if els[-1] == 'index'
-    set_title( prettify( els[-1]))
+    set_title( els[-1])
   end
 
   def add_child( article)
@@ -471,7 +471,7 @@ class Article
     index_dims = get_scaled_dims( compiler.dimensions( 'icon'), to_index.collect {|r| r.icon( backstop)})
 
     @metadata['index'] = to_index.collect do |relative|
-      {'title'    => relative.title,
+      {'title'    => prettify(relative.title),
        'tooltip'  => relative.blurb,
        'path'     => relative_path( sink_filename, relative.sink_filename),
        'icon'     => setup_image( compiler, relative.icon( backstop), index_dims, :prepare_thumbnail),
@@ -538,6 +538,16 @@ class Article
   def siblings( parents)
     return [] if parents.size == 0
     parents[-1].children
+  end
+
+  def sink_filename
+    if @metadata['permalink']
+      els = @sink_filename.split('/')
+      els[-1] = @metadata['permalink']
+      els.join('/')
+    else
+      @sink_filename
+    end
   end
 
   def sort( articles)
