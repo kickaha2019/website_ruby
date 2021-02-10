@@ -11,7 +11,7 @@ require 'utils'
 
 class Article
   include Utils
-  attr_accessor :content_added, :blurb, :time
+  attr_accessor :content_added, :blurb
 
   class BackstopIcon < Image
     def initialize( sink)
@@ -172,8 +172,10 @@ class Article
       min_height = 20000
 
       images.each do |image|
-        height = image.scaled_height( dim)
-        min_height = height if height < min_height
+        if image
+          height = image.scaled_height( dim)
+          min_height = height if height < min_height
+        end
       end
 
       scaled_dims << [dim[0], min_height]
@@ -190,7 +192,7 @@ class Article
     @metadata['gallery']
   end
 
-  def icon( defval = nil)
+  def icon
     return @icon if @icon
 
     children.each do |child|
@@ -199,7 +201,7 @@ class Article
       end
     end
 
-    defval
+    nil
   end
 
   def index( parents, html)
@@ -412,6 +414,7 @@ class Article
   end
 
   def setup_image( compiler, image_desc, dims, prepare, side='', wrap=false)
+    return nil unless image_desc
     recs = []
 
     image_desc.prepare_images( dims, prepare) do |image, w, h, sizes|
@@ -448,13 +451,13 @@ class Article
     even = true
     @markdown.each_index do |i|
       if m = /^!\[(.*)\]\((.*)\)/.match( @markdown[i].strip)
-        path       = abs_filename( source_filename, m[2])
-        desc       = describe_image( compiler, path, nil)
-        inset      = ((i+1) < @markdown.size) && (@markdown[i+1].strip != '')
-        icon_dims  = get_scaled_dims( compiler.dimensions( 'icon'), [desc])
+        path  = abs_filename( source_filename, m[2])
+        desc  = describe_image( compiler, path, nil)
+        inset = ((i+1) < @markdown.size) && (@markdown[i+1].strip != '')
+        dims  = get_scaled_dims( compiler.dimensions( inset ? 'icon' : 'image'), [desc])
 
-        side = inset ? (even ? 'right' : 'left') : ''
-        @markdown[i] = setup_image( compiler, desc, icon_dims, :prepare_thumbnail, side, inset)
+        side = inset ? (even ? 'right' : 'left') : 'centre'
+        @markdown[i] = setup_image( compiler, desc, dims, inset ? :prepare_thumbnail : :prepare_source_image, side, inset)
         even = ! even if inset
       end
     end
@@ -467,15 +470,34 @@ class Article
       to_index = siblings( parents) # .select {|a| a != self}
     end
 
-    backstop = BackstopIcon.new( compiler.sink_filename( "/resources/down_cyan.png"))
-    index_dims = get_scaled_dims( compiler.dimensions( 'icon'), to_index.collect {|r| r.icon( backstop)})
+    #backstop = BackstopIcon.new( compiler.sink_filename( "/resources/down_cyan.png"))
+    index_dims = get_scaled_dims( compiler.dimensions( 'icon'), to_index.collect {|r| r.icon})
 
     @metadata['index'] = to_index.collect do |relative|
       {'title'    => prettify(relative.title),
        'tooltip'  => relative.blurb,
        'path'     => relative_path( sink_filename, relative.sink_filename),
-       'icon'     => setup_image( compiler, relative.icon( backstop), index_dims, :prepare_thumbnail),
+       'icon'     => setup_image( compiler, relative.icon, index_dims, :prepare_thumbnail),
        'selected' => (self == relative)}
+    end
+  end
+
+  def setup_layout
+    return if @metadata['layout']
+
+    @metadata['layout'] = 'image_index'
+    @metadata['index'].each do |entry|
+      @metadata['layout'] = 'index' unless entry['icon']
+    end
+
+    if @no_index ||
+        (@metadata['index'].size == 0) ||
+        ((@children.size == 0) && @metadata['gallery'])
+      @metadata['layout'] = 'noindex'
+    end
+
+    if has_any_content?
+      @metadata['layout'] += '_content'
     end
   end
 
@@ -513,21 +535,6 @@ class Article
       setup_links_in_text( compiler, m[1]) + "[#{m[2]}](" + setup_link( compiler, m[3]) + ')' + setup_links_in_text( compiler, m[4])
     else
       text
-    end
-  end
-
-  def setup_layout
-    return if @metadata['layout']
-
-    @metadata['layout'] = 'index'
-    if @no_index ||
-       (@metadata['index'].size == 0) ||
-       ((@children.size == 0) && @metadata['gallery'])
-      @metadata['layout'] = 'noindex'
-    end
-
-    if has_any_content?
-      @metadata['layout'] += '_content'
     end
   end
 
@@ -584,6 +591,18 @@ class Article
 
   def source_filename
     @source_filename
+  end
+
+  def time
+    return @time if @time
+
+    children.each do |child|
+      if t = child.time
+        return t
+      end
+    end
+
+    nil
   end
 
   def title

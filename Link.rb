@@ -38,8 +38,8 @@ class Link
 		false
 	end
 
-	def icon( defval=nil)
-		@icon_source ? @icon_source.icon(defval) : defval
+	def icon
+		@icon_source ? @icon_source.icon : nil
 	end
 
 	def prepare( compiler, parents)
