@@ -294,15 +294,16 @@ class Article
   def prepare( compiler, parents)
     check_for_bad_characters
 
-    if @metadata['icon']
+    if @metadata['icon'] || @metadata['image']
+      icon = @metadata['icon'] ? @metadata['icon'] : @metadata['image']
       err = nil
 
-      if /^\// =~ @metadata['icon']
-        path = compiler.source + @metadata['icon']
+      if /^\// =~ icon
+        path = compiler.source + icon
       else
-        path = abs_filename( @source_filename, @metadata['icon'])
+        path = abs_filename( @source_filename, icon)
         if ! File.exists?( path)
-          path, err = compiler.lookup( @metadata['icon'])
+          path, err = compiler.lookup( icon)
         end
       end
 
@@ -352,6 +353,10 @@ class Article
 
   def set_icon( path)
     @metadata['icon'] = path
+  end
+
+  def set_metadata( k,v)
+    @metadata[k] = v
   end
 
   def set_no_index
@@ -449,6 +454,14 @@ class Article
 
   def setup_images( compiler)
     even = true
+
+    if @metadata['image']
+      path  = abs_filename( source_filename, @metadata['image'])
+      desc  = describe_image( compiler, path, nil)
+      dims  = get_scaled_dims( compiler.dimensions( 'image'), [desc])
+      @metadata['image'] = setup_image( compiler, desc, dims, :prepare_source_image, 'centre', false)
+    end
+
     @markdown.each_index do |i|
       if m = /^!\[(.*)\]\((.*)\)/.match( @markdown[i].strip)
         path  = abs_filename( source_filename, m[2])
@@ -636,6 +649,7 @@ class Article
   end
 
   def to_jekyll
+    puts source_filename
     lines = [@metadata.to_yaml]
     lines << '---'
     lines += @markdown

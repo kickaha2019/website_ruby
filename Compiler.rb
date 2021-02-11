@@ -154,34 +154,36 @@ class Compiler
     debug_hook( article)
     defn = YAML.load( defn)
 
-    if title = defn['title']
-      if /[\["\|&<>]/ =~ title
-        article.error( 0, "Title containing special character: " +	title)
+    defn.each_pair do |k,v|
+      case k
+
+      when 'blurb'
+        article.set_blurb( v)
+
+      when 'date'
+        t = convert_date( article, v)
+        article.set_date_and_time( format_date(t), t)
+
+      when 'icon'
+        article.set_icon( v)
+
+      when 'links'
+        v.each do |link|
+          article.add_child( Link.new( article, link['path'], link['tag']))
+        end
+
+      when 'no_index'
+        article.set_no_index
+
+      when 'title'
+        if /[\["\|&<>]/ =~ v
+          article.error( 0, "Title containing special character: " +	v)
+        else
+          article.set_title( v)
+        end
+
       else
-        article.set_title( title)
-      end
-    end
-
-    if blurb = defn['blurb']
-      article.set_blurb( blurb)
-    end
-
-    if date = defn['date']
-      t = convert_date( article, date)
-      article.set_date_and_time( format_date(t), t)
-    end
-
-    if icon = defn['icon']
-      article.set_icon( icon)
-    end
-
-    if noindex = defn['no_index']
-      article.set_no_index
-    end
-
-    if links = defn['links']
-      links.each do |link|
-        article.add_child( Link.new( article, link['path'], link['tag']))
+        article.set_metadata( k,v)
       end
     end
   end
@@ -254,15 +256,17 @@ class Compiler
     sink_filename = article.sink_filename.gsub( '.html', '.md').gsub( '.php', '.md')
     record( sink_filename)
 
-    File.open( sink_filename, 'w') do |io|
-      article.setup_root_path( @source)
-      article.setup_breadcrumbs( parents)
-      article.setup_gallery( self)
-      article.setup_index( self, parents)
-      article.setup_images( self)
-      article.setup_links( self)
-      article.setup_layout
-      io.puts article.to_jekyll
+    article.setup_root_path( @source)
+    article.setup_breadcrumbs( parents)
+    article.setup_gallery( self)
+    article.setup_index( self, parents)
+    article.setup_images( self)
+    article.setup_links( self)
+    article.setup_layout
+    new_src = article.to_jekyll
+
+    if (! File.exist?( sink_filename)) || (new_src.strip != IO.read( sink_filename).strip)
+      File.open( sink_filename, 'w') {|io| io.puts new_src}
     end
 
     article.children.each do |child|
