@@ -164,6 +164,10 @@ class Compiler
         t = convert_date( article, v)
         article.set_date_and_time( format_date(t), t)
 
+      when 'extension'
+        article.set_metadata( k,v)
+        article.set_metadata( 'permalink', article.sink_filename[(@sink.size+1)..-1])
+
       when 'icon'
         article.set_icon( v)
 

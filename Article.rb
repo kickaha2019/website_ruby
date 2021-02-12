@@ -561,10 +561,8 @@ class Article
   end
 
   def sink_filename
-    if @metadata['permalink']
-      els = @sink_filename.split('/')
-      els[-1] = @metadata['permalink']
-      els.join('/')
+    if @metadata['extension']
+      @sink_filename.gsub( /html$/, @metadata['extension'])
     else
       @sink_filename
     end
@@ -649,7 +647,6 @@ class Article
   end
 
   def to_jekyll
-    puts source_filename
     lines = [@metadata.to_yaml]
     lines << '---'
     lines += @markdown
