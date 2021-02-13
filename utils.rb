@@ -50,6 +50,23 @@ module Utils
     date.strftime( "%A, ") + date.day.to_s + ord + date.strftime( " %B %Y")
   end
 
+  def get_scaled_dims( dims, images)
+    scaled_dims = []
+
+    dims.each do |dim|
+      min_height = 20000
+
+      images.each do |image|
+        height = image.scaled_height( dim)
+        min_height = height if height < min_height
+      end
+
+      scaled_dims << [dim[0], min_height]
+    end
+
+    scaled_dims
+  end
+
   def prettify( name)
     if m = /^\d+[:_](.+)$/.match( name)
       name = m[1]
@@ -73,5 +90,40 @@ module Utils
     end
     rp = ((from.collect { ".."}) + to).join( "/")
     (rp == '') ? '.' : rp
+  end
+
+  def setup_link( compiler, article, link)
+    if /^(http|https|mailto):/ =~ link
+      link
+    elsif /\.(html|php)$/ =~ link
+      relative_path( article.sink_filename, link)
+    elsif /\.(jpeg|jpg|png|gif)$/i =~ link
+      article.error( "Link to image: #{link}")
+      ''
+    else
+      url = compiler.link( link)
+      unless url
+        ref, err = compiler.lookup( link)
+        if err
+          error( err)
+          url = ''
+        else
+          url = relative_path( article.sink_filename, ref.is_a?( String) ? ref : ref.sink_filename)
+        end
+      end
+      url
+    end
+  end
+
+  def setup_links_in_text( compiler, article, text)
+    if m = /^(.*)\[([^\]]*)\]\(([^\)]*)\)(.*)$/.match( text)
+      setup_links_in_text( compiler,
+                           article,
+                           m[1]) +
+      "[#{m[2]}](" + setup_link( compiler, article, m[3]) + ')' +
+      setup_links_in_text( compiler, article, m[4])
+    else
+      text
+    end
   end
 end

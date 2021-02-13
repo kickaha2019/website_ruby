@@ -13,7 +13,8 @@ class HTML
     @css          = []
     @error        = nil
     @sink         = sink
-    @local_links = {}
+    @local_links  = {}
+    @inset_even   = true
   end
 
   def add_blurb( blurb)
@@ -150,16 +151,88 @@ class HTML
     end
   end
 
+  def gallery( images)
+    start_div( 'gallery t1')
+    icon_dims = get_scaled_dims( @compiler.dimensions( 'icon'), images)
+    images.each do |image|
+      start_div
+      start_div
+      image_wrapped( image, 'centre', icon_dims)
+      end_div
+      start_div
+      markdownify( image.tag)
+      end_div
+      end_div
+    end
+    (0..7).each {@output << '<DIV CLASS="dummy size1 size2 size3"></DIV>'}
+    end_div
+  end
+
   def html( lines)
     lines.each do |line|
       @output << line
     end
   end
 
-  def image( file, w, h, alt_text, inject='')
-    @compiler.record( file)
-    rp = relative_path( @path, file)
-    @output << "<IMG CLASS=\"#{inject.strip}\" SRC=\"#{rp}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" ALT=\"#{alt_text}\">"
+  def image( image, side, dims, prepare, inject='')
+    image.prepare_images( dims, prepare) do |image_file, w, h, sizes|
+      if image_file.nil?
+        raise 'Internal error'
+      end
+      @compiler.record( image_file)
+      rp = relative_path( @path, image_file)
+      @output << "<IMG CLASS=\"#{sizes} #{side}\" SRC=\"#{rp}\" WIDTH=\"#{w}\" HEIGHT=\"#{h}\" ALT=\"#{prettify(image.tag)} picture\"#{inject}>"
+    end
+  end
+
+  def image_centered( image)
+    image( image,
+          'centre',
+           get_scaled_dims( @compiler.dimensions( 'image'), [image]),
+          :prepare_source_image)
+  end
+
+  def image_inset( image)
+    image_wrapped( image,
+                   @inset_even ? 'right' : 'left',
+                   get_scaled_dims( @compiler.dimensions( 'icon'), [image]))
+    @inset_even = ! @inset_even
+  end
+
+  def image_wrapped( image, side, icon_dims)
+    inject = [' onclick="javascript: showOverlay(']
+    sized_images = []
+
+    image_dims = get_scaled_dims( @compiler.dimensions( 'image'), [image])
+    image.prepare_images( image_dims, :prepare_source_image) do |image_file, w, h, sizes|
+      @compiler.record( image_file)
+      sizes.split(' ').each do |size|
+        sized_images[size[-1..-1].to_i] = image_file
+      end
+    end
+
+    separ = ''
+    sized_images[1..-1].each do |image_file|
+      inject << "#{separ}'#{image_file}'"
+      separ = ','
+    end
+
+    inject << ');"'
+    image( image, side, icon_dims,:prepare_thumbnail, inject.join(''))
+  end
+
+  def list( entries)
+    @output << '<table class="list">'
+    entries.each_pair do |k,v|
+      @output << "<tr><th>#{k}</th><td>"
+      markdownify( v)
+      @output << '</td></tr>'
+    end
+    @output << '</table>'
+  end
+
+  def markdownify( md)
+    @output << CommonMarker.render_html( md, :DEFAULT)
   end
 
   def no_indexes

@@ -11,21 +11,7 @@ require 'utils'
 
 class Article
   include Utils
-  attr_accessor :content_added, :sink_filename, :blurb
-
-  class BackstopIcon < Image
-    def initialize( sink)
-      super( nil, sink, nil, nil, nil)
-    end
-
-    def prepare_thumbnail( width, height)
-      return @sink, width, height
-    end
-
-    def scaled_height( dim)
-      dim[1]
-    end
-  end
+  attr_accessor :content_added
 
   def initialize( source, sink)
     @source_filename = source
@@ -34,12 +20,7 @@ class Article
     @children_sorted = true
     @icon            = nil
     @errors          = []
-    @markdown        = nil
-    @date            = nil
-    @blurb           = nil
-    @no_index        = false
-
-    set_title( name)
+    @content         = []
   end
 
   def add_child( article)
@@ -52,8 +33,17 @@ class Article
     @children << article
   end
 
-  def add_markdown( defn)
-    @markdown = Markdown.new( defn)
+  def add_content( item)
+    @content << item
+  end
+
+  def blurb
+    @content.each do |item|
+      if item.is_a?( Blurb)
+        return item.blurb
+      end
+    end
+    nil
   end
 
   def children
@@ -69,118 +59,42 @@ class Article
   end
 
   def date
-    @date # ? @date : Time.gm( 1970, "Jan", 1)
-  end
-
-  def describe_image( compiler, image_filename, tag)
-    fileinfo = compiler.fileinfo( image_filename)
-    info = nil
-    ts = File.mtime( image_filename).to_i
-
-    if File.exist?( fileinfo)
-      info = IO.readlines( fileinfo).collect {|line| line.chomp.to_i}
-      info = nil unless info[0] == ts
-    end
-
-    unless info
-      dims = get_image_dims( image_filename)
-      info = [ts, dims[:width], dims[:height]]
-      File.open( fileinfo, 'w') do |io|
-        io.puts info.collect {|i| i.to_s}.join("\n")
-      end
-
-      to_delete = []
-      sink_dir = File.dirname( compiler.sink_filename( image_filename))
-
-      if File.directory?( sink_dir)
-        Dir.entries( sink_dir).each do |f|
-          if m = /^(.*)_\d+_\d+(\..*)$/.match( f)
-            to_delete << f if image_filename.split('/')[-1] == (m[1] + m[2])
-          end
-        end
-
-        to_delete.each {|f| File.delete( sink_dir + '/' + f)}
+    @content.each do |item|
+      if item.is_a?( Date)
+        return item.date
       end
     end
-
-    Image.new( image_filename,
-               compiler.sink_filename( image_filename),
-               tag,
-               info[1],
-               info[2])
+    nil
   end
 
   def error( msg)
     @errors << msg
   end
 
-  def get_image_dims( filename)
-    #raise filename # DEBUG CODE
-    if not system( "sips -g pixelHeight -g pixelWidth -g orientation " + filename + " >/tmp/sips.log")
-      error( "Error running sips on: " + filename)
-      nil
-    else
-      w,h,flip = nil, nil, false
-
-      lines = IO.readlines( "/tmp/sips.log")
-
-      abs_path = lines[0].chomp.split('/')
-      rel_path = filename.split('/')
-
-      rel_path.each_index do |i|
-        next if /^\./ =~ rel_path[i]
-        if abs_path[i - rel_path.size] != rel_path[i]
-          error( "Case mismatch for image name [#{filename}]")
-          return nil
-        end
-      end
-
-      lines[1..-1].each do |line|
-        if m = /pixelHeight: (\d*)$/.match( line.chomp)
-          h = m[1].to_i
-        end
-        if m = /pixelWidth: (\d*)$/.match( line.chomp)
-          w = m[1].to_i
-        end
-      end
-
-      if w and h
-        {:width => w, :height => h}
-      else
-        error( "Not a valid image file: " + filename)
-        nil
-      end
-    end
-  end
-
-  def get_scaled_dims( dims, images)
-    scaled_dims = []
-
-    dims.each do |dim|
-      min_height = 20000
-
-      images.each do |image|
-        height = image.scaled_height( dim)
-        min_height = height if height < min_height
-      end
-
-      scaled_dims << [dim[0], min_height]
-    end
-
-    scaled_dims
-  end
-
   def has_any_content?
-    ! @markdown.nil?
+    @content.each do |item|
+      return true if item.page_content?
+    end
+    false
   end
 
   def has_gallery?
-    @markdown && @markdown.has_gallery?
+    @content.each do |item|
+      return true if item.is_a?( Gallery)
+    end
+    false
   end
 
   def icon
-    return @icon if @icon
-    return @markdown.first_image if @markdown && @markdown.first_image
+    @content.each do |item|
+      return item if item.is_a?( Icon)
+    end
+
+    @content.each do |item|
+      return item if item.is_a?( Image)
+      return item.image if item.is_a?( Inset)
+      return item.first_image if item.is_a?( Gallery)
+    end
 
     children.each do |child|
       if icon = child.icon
@@ -200,7 +114,7 @@ class Article
       to_index = siblings( parents) # .select {|a| a != self}
     end
 
-    if @no_index || (to_index.size == 0)
+    if no_index? || (to_index.size == 0)
       html.no_indexes
       return
     end
@@ -218,17 +132,11 @@ class Article
   end
 
   def index_images?( articles)
-    with, without = 0, 0
-
     articles.each do |article|
-      if article.icon
-        with += 1
-      else
-        without += 1
-      end
+      return false unless article.icon
     end
 
-    with > without
+    true
   end
 
   def index_resource( html, page, image, dims)
@@ -237,23 +145,19 @@ class Article
 
     html.begin_index( target, (page == self) ? 'border_white' : '')
     html.add_blurb( page.blurb) unless (page == self) || page.blurb.nil?
-    image.prepare_images( dims, :prepare_thumbnail) do |file, w, h, sizes|
-      html.image( file, w, h, alt_text, sizes)
-    end
+    html.image( image, 'centre', dims, :prepare_thumbnail)
     html.end_index( target, alt_text)
   end
 
   def index_using_images( to_index, html)
     dims = html.dimensions( 'icon')
-    backstop = BackstopIcon.new( html.sink_filename( "/resources/down_cyan.png"))
     scaled_dims = get_scaled_dims( dims,
                                    to_index.collect do |child|
-                                     child.icon ? child.icon : backstop
+                                     child.icon
                                    end)
 
     to_index.each do |child|
-      icon = child.icon ? child.icon : backstop
-      index_resource( html, child, icon, scaled_dims)
+      index_resource( html, child, child.icon, scaled_dims)
     end
 
     (0..7).each {html.add_index_dummy}
@@ -262,97 +166,36 @@ class Article
   def name
     path = @source_filename.split( "/")
     (path[-1] == 'index') ? path[-2] : path[-1]
-    # if m = /(^|\/)([^\/]*)\.(txt|md)$/.match( @source_filename)
-    #   m[2]
-    # else
-    #   @source_filename.split( "/")[-1]
-    # end
   end
 
-  def picture_rp
-    picture_sink_filename.split('/')[-1]
-  end
-
-  def picture_sink_filename
-    m = /^(.*)\.[a-zA-Z]*$/.match( @sink_filename)
-    m[1] + '_pictures.html'
+  def no_index?
+    @content.each do |item|
+      return item.flag if item.is_a?( NoIndex)
+    end
+    false
   end
 
   def prepare( compiler, parents)
-    if @icon
-      err = nil
-
-      if /^\// =~ @icon
-        path = @icon
-      else
-        path = abs_filename( @source_filename, @icon)
-        if ! File.exists?( path)
-          path, err = compiler.lookup( @icon)
-        end
-      end
-
-      if err.nil? && File.exists?( path)
-        @icon = describe_image( compiler, path, nil)
-      else
-        error( err ? err : "Icon #{@icon} not found")
-        @icon = nil
-      end
+    @content.each do |item|
+      item.prepare( compiler, self, parents)
     end
-
-    if @markdown
-      @markdown.prepare( compiler, self)
-    end
-  end
-
-  def prepare_name_for_index( text)
-    len = text.size
-    words = prettify( text).split( " ")
-    if (len > MAX_INDEX_NAME_SIZE) and (words.size > 1)
-      while ((len + 4) > MAX_INDEX_NAME_SIZE) and (words.size > 1)
-        len -= (1 + words[-1].size)
-        words = words[0..-2]
-      end
-      words << "..."
-    end
-    words.join( "&nbsp;")
   end
 
   def report_errors( compiler)
     @errors.each {|err| compiler.error( @source_filename, err)}
   end
 
-  def set_blurb( b)
-    @blurb = b
-  end
-
-  def set_date( t)
-    @date = t if @date.nil?
-  end
-
-  def set_icon( path)
-    @icon = path
-  end
-
-  def set_no_index
-    @no_index = true
-  end
-
-  def set_php
-    return if /\.php$/ =~ @sink_filename
-    if m = /^(.*)\.html$/.match( @sink_filename)
-      @sink_filename = m[1] + '.php'
-    else
-      error( 'Unable to set page to PHP')
-    end
-  end
-
-  def set_title( title)
-    @title = title
-  end
-
   def siblings( parents)
     return [] if parents.size == 0
     parents[-1].children
+  end
+
+  def sink_filename
+    ext = 'html'
+    @content.each do |item|
+      ext = 'php' if item.is_a?( PHP)
+    end
+    @sink_filename.gsub( /html$/, ext)
   end
 
   def sort( articles)
@@ -392,11 +235,15 @@ class Article
   end
 
   def title
-    @title ? @title : "Home"
+    @content.each do |item|
+      return item.title if item.is_a?( Title)
+    end
+    path = @source_filename.split( "/")
+    (path[-1] == 'index') ? path[-2] : path[-1]
   end
 
   def to_html( parents, html)
-    html.start_page( parents[0] ? parents[0].title : @title)
+    html.start_page( parents[0] ? parents[0].title : title)
     html.breadcrumbs( parents, title, false) if parents.size > 0
     html.start_div( 'payload content')
 
@@ -406,13 +253,11 @@ class Article
       html.start_div( 'story t1')
     end
 
-    if has_any_content? && @date
-      html.date( @date) do |err|
+    @content.each do |item|
+      item.to_html( html) do |err|
         error( err)
       end
     end
-
-    @markdown.process( self, parents, html) if @markdown
 
     if has_any_content?
       html.end_div

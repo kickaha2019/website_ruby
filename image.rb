@@ -1,12 +1,56 @@
-class Image
+require_relative 'Element'
+require 'utils'
+
+class Image < Element
+  include Utils
   attr_reader :height, :width, :tag
 
-  def initialize( source, sink, tag, width, height)
-    @source  = source
-    @sink    = sink
-    @tag     = tag
-    @width   = width
-    @height  = height
+  def initialize( compiler, article, source)
+    @tag = prettify( source.split('/')[-1].split('.')[0])
+    @height = @width = 1
+
+    @source = (/^\// =~ source) ? source : abs_filename( article.source_filename, source)
+    if ! File.exists?( @source)
+      @source, err = compiler.lookup( @source)
+      if err
+        article.error( "Bad image: #{source}")
+        return
+      end
+    end
+
+    @sink = compiler.sink_filename( @source)
+    fileinfo = compiler.fileinfo( @source)
+    info = nil
+    ts = File.mtime( @source).to_i
+
+    if File.exist?( fileinfo)
+      info = IO.readlines( fileinfo).collect {|line| line.chomp.to_i}
+      info = nil unless info[0] == ts
+    end
+
+    unless info
+      dims = get_image_dims( @source)
+      info = [ts, dims[:width], dims[:height]]
+      File.open( fileinfo, 'w') do |io|
+        io.puts info.collect {|i| i.to_s}.join("\n")
+      end
+
+      to_delete = []
+      sink_dir = File.dirname( compiler.sink_filename( @source))
+
+      if File.directory?( sink_dir)
+        Dir.entries( sink_dir).each do |f|
+          if m = /^(.*)_\d+_\d+(\..*)$/.match( f)
+            to_delete << f if @source.split('/')[-1] == (m[1] + m[2])
+          end
+        end
+
+        to_delete.each {|f| File.delete( sink_dir + '/' + f)}
+      end
+    end
+
+    @width  = info[1]
+    @height = info[2]
   end
 
   def constrain_dims( tw, th, w, h)
@@ -31,6 +75,49 @@ class Image
       create_directory( path)
       Dir.mkdir( path)
     end
+  end
+
+  def get_image_dims( filename)
+    #raise filename # DEBUG CODE
+    if not system( "sips -g pixelHeight -g pixelWidth -g orientation " + filename + " >/tmp/sips.log")
+      error( "Error running sips on: " + filename)
+      nil
+    else
+      w,h,flip = nil, nil, false
+
+      lines = IO.readlines( "/tmp/sips.log")
+
+      abs_path = lines[0].chomp.split('/')
+      rel_path = filename.split('/')
+
+      rel_path.each_index do |i|
+        next if /^\./ =~ rel_path[i]
+        if abs_path[i - rel_path.size] != rel_path[i]
+          error( "Case mismatch for image name [#{filename}]")
+          return nil
+        end
+      end
+
+      lines[1..-1].each do |line|
+        if m = /pixelHeight: (\d*)$/.match( line.chomp)
+          h = m[1].to_i
+        end
+        if m = /pixelWidth: (\d*)$/.match( line.chomp)
+          w = m[1].to_i
+        end
+      end
+
+      if w and h
+        {:width => w, :height => h}
+      else
+        error( "Not a valid image file: " + filename)
+        nil
+      end
+    end
+  end
+
+  def page_content?
+    true
   end
 
   def prepare_images( dims, prepare, * args)
@@ -67,6 +154,9 @@ class Image
   def prepare_thumbnail( width, height)
     w,h = shave_thumbnail( width, height, @width, @height)
     m = /^(.*)(\.\w*)$/.match( @sink)
+    unless m
+      raise 'Internal error'
+    end
     thumbfile = m[1] + "-#{width}-#{height}" + m[2]
 
     if not File.exists?( thumbfile)
@@ -85,6 +175,10 @@ class Image
     (sh > dim[1]) ? sh : dim[1]
   end
 
+  def set_tag( tag)
+    @tag = tag
+  end
+
   def shave_thumbnail( width, height, width0, height0)
     if ((width0 * 1.0) / height0) > ((width * 1.0) / height)
       # p [height0, width, height, height0 * (width * 1.0), height0 * (width * 1.0) / height]
@@ -96,5 +190,9 @@ class Image
       y = (height0 - h) / 2
       return 0, y
     end
+  end
+
+  def to_html( html)
+    html.image_centered( self)
   end
 end

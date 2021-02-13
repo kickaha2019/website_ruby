@@ -22,7 +22,9 @@ require 'rexml/xpath'
 require 'yaml'
 require 'cgi'
 
-load "Article.rb"
+require_relative 'Article'
+require_relative 'element'
+
 load "HTML.rb"
 load "Link.rb"
 require 'utils'
@@ -103,6 +105,7 @@ class Compiler
     # Loop over source files - skip image files and other specials
     Dir.entries( @source + path).each do |file|
       next if /^\./ =~ file
+      next if /^\_/ =~ file
       next if (path == '') && ['resources', 'templates', 'README.md','dimensions.yaml','links.yaml'].include?( file)
       path1 = path + "/" + file
 
@@ -129,64 +132,22 @@ class Compiler
     debug_hook( article)
     text = IO.read( @source + path + "/" + file)
     lines = text.split( "\n")
+    i = 0
 
-    if /^---/ =~ lines[0]
-      end_yaml = 1
-      while ! (/^---/ =~ lines[end_yaml])
-        end_yaml += 1
-      end
-
-      if /---/ =~ lines[end_yaml+1]
-        article.error( 'Duplicated front matter')
-      end
-
-      parse_yaml( lines[0..end_yaml-1].join("\n"), article)
-      text = lines[end_yaml+1..-1].join("\n")
-    end
-
-    article.add_markdown( text) if text.strip != ''
-  end
-
-  def parse_yaml( defn, article)
-    debug_hook( article)
-    defn = YAML.load( defn)
-
-    if title = defn['title']
-      if /[\["\|&<>]/ =~ title
-        article.error( 0, "Title containing special character: " +	title)
+    while i < lines.size
+      if m = /^@(\S+)\s*$/.match( lines[i])
+        j = i + 1
+        while ((j+1) < lines.size) && (! (/^@\S/ =~ lines[j+1]))
+          j = j + 1
+        end
+        article.add_content( to_class( m[1]).new( self, article, lines[(i+1)..j]))
+        i = j + 1
+      elsif m1 = /^@(\S+)\s*(\S.*)$/.match( lines[i])
+        article.add_content( to_class( m1[1]).new( self, article, m1[2]))
+        i += 1
       else
-        article.set_title( title)
-      end
-    end
-
-    if blurb = defn['blurb']
-      article.set_blurb( blurb)
-    end
-
-    if date = defn['date']
-      t = convert_date( article, date)
-      article.set_date( t)
-    end
-
-    if icon = defn['icon']
-      article.set_icon( icon)
-    end
-
-    if noindex = defn['no_index']
-      article.set_no_index
-    end
-
-    if ext = defn['extension']
-      if ext == 'php'
-        article.set_php
-      else
-        article.error( "Extension #{ext} not supported")
-      end
-    end
-
-    if links = defn['links']
-      links.each do |link|
-        article.add_child( Link.new( article, link['path'], link['tag']))
+        article.error( "Syntax error")
+        i = lines.size + 1
       end
     end
   end
@@ -228,6 +189,7 @@ class Compiler
   end
 
   def lookup( path)
+    return @source + path if File.exist?( @source + path)
     matches = @key2paths[path]
 
     if matches.size < 1
@@ -257,14 +219,12 @@ class Compiler
   def regenerate( parents, article)
     debug_hook( article)
 
-#    if article.has_content? || (! article.has_picture_page?)
     html = HTML.new( self, @sink, article.sink_filename)
     html.start
     article.to_html( parents, html)
     html.finish do |error|
       article.error( error)
     end
-#    end
 
     # if article.has_picture_page?( parents)
     #   html = HTML.new( self, @sink, article.picture_sink_filename)
@@ -350,6 +310,17 @@ class Compiler
 
   def template( name)
     @templates[name]
+  end
+
+  def to_class( name)
+    if name.downcase == 'stdprn'
+      puts 'DEBUG100'
+    end
+    require_relative name.downcase
+    if name.downcase == name
+      name = name.split( '_').collect {|n| n.capitalize}.join('')
+    end
+    Kernel.const_get( name)
   end
 
   def variables

@@ -1,63 +1,21 @@
 require 'article_renderer'
 require 'utils'
 
-class Markdown
+class Markdown < Element
   include Utils
 
-  class ImageInfo
-    attr_reader :dims, :mode, :image, :caption
-    def initialize( image, caption, mode, dims)
-      @image   = image
-      @caption = caption
-      @mode    = mode
-      @dims    = dims
-    end
-  end
-
-  def initialize( defn)
-    @defn        = defn
-    @doc         = CommonMarker.render_doc( defn, [:UNSAFE], [:table])
+  def initialize( compiler, article, lines)
+    @lines = lines
+#    @doc         = CommonMarker.render_doc( @defn, [:UNSAFE], [:table])
     @html        = []
     @injected    = {}
     @has_gallery = false
   end
 
-  def char_count( snippet)
-    count = 0
-    snippet.walk do |node|
-      if (node.type == :code_block) || (node.type == :text)
-        count += node.string_content.size
-      end
+  def prepare( compiler, article, parents)
+    @lines.each_index do |i|
+      @lines[i] = setup_links_in_text( compiler, article, @lines[i])
     end
-    count
-  end
-
-  def first_image
-    return nil if @images.size < 1
-    @images.values[0].image
-  end
-
-  def has_gallery?
-    @has_gallery
-  end
-
-  def inject( index, raw)
-    @injected[index] = raw
-  end
-
-  def part( text)
-    doc = CommonMarker.render_doc( text, [:UNSAFE])
-    doc.each do |para|
-      return para if para.type == :html
-      return para.first_child
-    end
-    raise "Grandchild not found"
-  end
-
-  def prepare( compiler, article)
-    @images = prepare_images( compiler, article)
-    renderer = ArticleRenderer.new( compiler, article, @images)
-    @html = renderer.to_html( @doc)
   end
 
   def prepare_gallery( compiler, article, images, clump)
@@ -121,7 +79,7 @@ class Markdown
     html.html( [@html])
   end
 
-  def text_chars
-    char_count( @doc)
+  def to_html( html)
+    html.markdownify( @lines.join( "\n"))
   end
 end
