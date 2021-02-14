@@ -145,7 +145,7 @@ class Article
 
     html.begin_index( target, (page == self) ? 'border_white' : '')
     html.add_blurb( page.blurb) unless (page == self) || page.blurb.nil?
-    html.image( image, 'centre', dims, :prepare_thumbnail)
+    html.image( image, '', dims, :prepare_thumbnail)
     html.end_index( target, alt_text)
   end
 

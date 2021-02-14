@@ -9,6 +9,10 @@ class Links < Element
     end
   end
 
+  def page_content?
+    false
+  end
+
   def prepare( compiler, article, parents)
     article.children do |child|
       child.prepare( compiler, parents)
