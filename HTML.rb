@@ -232,7 +232,7 @@ class HTML
   end
 
   def markdownify( md)
-    @output << CommonMarker.render_html( md, :DEFAULT)
+    @output << CommonMarker.render_html( md, :DEFAULT, [:table])
   end
 
   def no_indexes
