@@ -92,11 +92,11 @@ module Utils
     (rp == '') ? '.' : rp
   end
 
-  def setup_link( compiler, article, link)
+  def setup_link( compiler, path, link)
     if /^(http|https|mailto):/ =~ link
       link
     elsif /\.(html|php)$/ =~ link
-      relative_path( article.sink_filename, link)
+      relative_path( path, link)
     elsif /\.(jpeg|jpg|png|gif)$/i =~ link
       article.error( "Link to image: #{link}")
       ''
@@ -108,20 +108,18 @@ module Utils
           error( err)
           url = ''
         else
-          url = relative_path( article.sink_filename, ref.is_a?( String) ? ref : ref.sink_filename)
+          url = relative_path( path, ref.is_a?( String) ? ref : ref.sink_filename)
         end
       end
       url
     end
   end
 
-  def setup_links_in_text( compiler, article, text)
-    if m = /^(.*)\[([^\]]*)\]\(([^\)]*)\)(.*)$/.match( text)
-      setup_links_in_text( compiler,
-                           article,
-                           m[1]) +
-      "[#{m[2]}](" + setup_link( compiler, article, m[3]) + ')' +
-      setup_links_in_text( compiler, article, m[4])
+  def setup_links_in_text( compiler, path, text)
+    if m = /^(.*)\[([^\]]*)\]\(([^\)]*)\)(.*)$/m.match( text)
+      setup_links_in_text( compiler, path, m[1]) +
+      "[#{m[2]}](" + setup_link( compiler, path, m[3]) + ')' +
+      setup_links_in_text( compiler, path, m[4])
     else
       text
     end

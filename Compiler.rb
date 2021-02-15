@@ -216,6 +216,11 @@ class Compiler
     end
   end
 
+  def record( path)
+    @generated[path] = true
+    path
+  end
+
   def regenerate( parents, article)
     debug_hook( article)
 
@@ -225,15 +230,6 @@ class Compiler
     html.finish do |error|
       article.error( error)
     end
-
-    # if article.has_picture_page?( parents)
-    #   html = HTML.new( self, @sink, article.picture_sink_filename)
-    #   html.start
-    #   article.to_pictures( parents, html)
-    #   html.finish do |error|
-    #     article.error( error)
-    #   end
-    # end
 
     article.children.each do |child|
       regenerate( parents + [article], child) if child.is_a?( Article)
@@ -264,6 +260,28 @@ class Compiler
     file
   end
 
+  def sync_resources( from, to, match)
+    Dir.mkdir( to) unless File.exist?( to)
+    Dir.entries( from).each do |f|
+      next unless match =~ f
+      input = from + '/' + f
+      f1 = f
+      if /\.css$/ =~ f
+        f1 = f.split('.')[0] + "_#{File.mtime(input).to_i}." + f.split('.')[1]
+      end
+      @variables[f] = f1
+      output = to + '/' + f1
+      record( output)
+      unless File.exist?( output) && (File.mtime( output) == File.mtime( input))
+        FileUtils.cp( input, output)
+      end
+    end
+  end
+
+  def template( name)
+    @templates[name]
+  end
+
   def tidy_up( path)
     keep = false
     Dir.entries( path).each do |f|
@@ -286,30 +304,6 @@ class Compiler
       end
     end
     keep
-  end
-
-  def record( path)
-    @generated[path] = true
-    path
-  end
-
-  def sync_resources( from, to, match)
-    Dir.mkdir( to) unless File.exist?( to)
-    Dir.entries( from).each do |f|
-      next unless match =~ f
-      input = from + '/' + f
-      f1 = f.split('.')[0] + "_#{File.mtime(input).to_i}." + f.split('.')[1]
-      @variables[f] = f1
-      output = to + '/' + f1
-      record( output)
-      unless File.exist?( output)
-        FileUtils.cp( input, output)
-      end
-    end
-  end
-
-  def template( name)
-    @templates[name]
   end
 
   def to_class( name)

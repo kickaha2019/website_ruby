@@ -4,9 +4,6 @@
   Represent article for HTML generation
 =end
 
-require 'fileutils'
-require 'image'
-require "markdown.rb"
 require 'utils'
 
 class Article
@@ -85,19 +82,19 @@ class Article
     false
   end
 
-  def icon
+  def icon( others=[])
     @content.each do |item|
       return item if item.is_a?( Icon)
     end
 
     @content.each do |item|
-      return item if item.is_a?( Image)
-      return item.image if item.is_a?( Inset)
-      return item.first_image if item.is_a?( Gallery)
+      if icon = item.image( others)
+        return icon
+      end
     end
 
     children.each do |child|
-      if icon = child.icon
+      if icon = child.icon( others)
         return icon
       end
     end
@@ -151,13 +148,15 @@ class Article
 
   def index_using_images( to_index, html)
     dims = html.dimensions( 'icon')
-    scaled_dims = get_scaled_dims( dims,
-                                   to_index.collect do |child|
-                                     child.icon
-                                   end)
 
+    icons = []
     to_index.each do |child|
-      index_resource( html, child, child.icon, scaled_dims)
+      icons << child.icon( icons)
+    end
+
+    scaled_dims = get_scaled_dims( dims, icons)
+    to_index.each_index do |i|
+      index_resource( html, to_index[i], icons[i], scaled_dims)
     end
 
     (0..7).each {html.add_index_dummy}

@@ -5,7 +5,7 @@
 =end
 
 class Link
-  attr_reader :date, :icon, :sink_filename, :title
+  attr_reader :date, :sink_filename, :title
 
 	def initialize( article, link, title=nil)
 		@article       = article
@@ -33,8 +33,8 @@ class Link
 		false
 	end
 
-	def icon
-		@icon_source ? @icon_source.icon : nil
+	def icon( others=[])
+		@icon_source ? @icon_source.icon( others) : nil
 	end
 
 	def prepare( compiler, parents)

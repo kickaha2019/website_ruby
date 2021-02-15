@@ -1,6 +1,7 @@
 require 'erb'
 require 'yaml'
 require 'utils'
+require 'commonmarker'
 
 class HTML
   include Utils
@@ -157,7 +158,7 @@ class HTML
     images.each do |image|
       start_div
       start_div
-      image_wrapped( image, 'centre', icon_dims)
+      image_wrapped( image, '', icon_dims)
       end_div
       start_div
       markdownify( image.tag)
@@ -232,6 +233,18 @@ class HTML
   end
 
   def markdownify( md)
+    if md.is_a?( Array)
+      md.each_index do |i|
+        #puts 'DEBUG100: ',md[i]
+        md[i] = setup_links_in_text( @compiler, @path, md[i])
+        #puts 'DEBUG110: ',md[i]
+      end
+      md = md.join( "\n")
+    else
+      #puts 'DEBUG200: ',md
+      md = setup_links_in_text( @compiler, @path, md)
+      #puts 'DEBUG210: ',md
+    end
     @output << CommonMarker.render_html( md, :DEFAULT, [:table])
   end
 

@@ -12,11 +12,11 @@ class List < Element
     end
   end
 
-  def prepare( compiler, article, parents)
-    @list.keys.each do |k|
-      @list[k] = setup_links_in_text( compiler, article, @list[k])
-    end
-  end
+  # def prepare( compiler, article, parents)
+  #   @list.keys.each do |k|
+  #     @list[k] = setup_links_in_text( compiler, article, @list[k])
+  #   end
+  # end
 
   def to_html( html)
     html.list( @list)

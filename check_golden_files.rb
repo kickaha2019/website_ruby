@@ -4,6 +4,7 @@
 # Command line arguments:
 #   Golden file directory
 #   Generated file directory
+#   File for commands to refresh golden files
 #
 
 def load_filtered( path)
@@ -23,7 +24,7 @@ def load_filtered( path)
   lines.join( "\n")
 end
 
-def check_golden_files( dir)
+def check_golden_files( dir, io)
   errors = 0
 
   Dir.entries( ARGV[0] + dir).each do |f|
@@ -32,8 +33,9 @@ def check_golden_files( dir)
     generated = ARGV[1] + dir + '/' + f
 
     if File.directory?( golden)
-      errors += check_golden_files( dir + '/' + f)
+      errors += check_golden_files( dir + '/' + f, io)
     elsif /\.html$/ =~ f
+      io.puts "cp #{generated} #{golden}"
       # puts "... Checking #{golden}"
       if File.exist?( generated)
         if load_filtered( golden) != load_filtered( generated)
@@ -51,5 +53,10 @@ def check_golden_files( dir)
   errors
 end
 
-errors = check_golden_files( '')
+errors = 0
+File.open( ARGV[2], 'w') do |io|
+  io.puts '#!/bin.csh'
+  errors += check_golden_files( '', io)
+end
+
 exit(1) if errors > 0

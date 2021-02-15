@@ -3,7 +3,7 @@ require 'utils'
 
 class Image < Element
   include Utils
-  attr_reader :height, :width, :tag
+  attr_reader :height, :width, :tag, :source
 
   def initialize( compiler, article, source)
     @tag = prettify( source.split('/')[-1].split('.')[0])
@@ -116,6 +116,10 @@ class Image < Element
     end
   end
 
+  def image( others=[])
+    return self
+  end
+
   def page_content?
     true
   end
@@ -168,6 +172,10 @@ class Image < Element
     end
 
     return thumbfile, width, height
+  end
+
+  def same_source( other)
+    @source == other.source
   end
 
   def scaled_height( dim)

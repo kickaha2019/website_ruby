@@ -3,6 +3,10 @@ class Element
     true
   end
 
+  def image( others=[])
+    nil
+  end
+
   def prepare( compiler, article, parents)
   end
 
